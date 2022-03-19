@@ -1,15 +1,7 @@
 import openpyxl
 
 
-# class State:
-#     def __init__(self) -> None:
-#         self.complete = False
-#         self.timeout = 10
 
-# class Init(State):
-#     def __init__(self) -> None:
-#         super().__init__()
-#         tu = TestUnit()
 
 class TestUnit(object):
     def __init__(self) -> None:
