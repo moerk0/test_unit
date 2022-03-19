@@ -1,8 +1,3 @@
-import openpyxl
-
-
-
-
 class TestUnit(object):
     def __init__(self) -> None:
         
@@ -11,12 +6,10 @@ class TestUnit(object):
         self.inNum = -1
         self.outChar = ''
 
-    
+    def runTest(self) -> bool:
+       passed = True
 
-    
-
-
-    def runTest(self) -> None:
-        pass
+       if passed == True:
+           return passed
 
 

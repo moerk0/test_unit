@@ -1,2 +1,9 @@
-with serial.Serial('/dev/tty0', 115200, timeout=1) as ser:
-    ser.is_open()
+import serial
+
+
+ser = serial.Serial()
+
+ser.baudrate = 115200
+ser.port = '/dev/ttyACM0'
+ser.open()
+print(ser.is_open)
