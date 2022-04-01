@@ -21,7 +21,15 @@ def fillList(num_column, char_column, sheet):
             n = sheet.cell(row=row, column=num_column)
             c = c.value
             n = n.value
-            if n is not None and n.isdigit():
-                l[c] = int(n)
+            try:
+                l[int(n)] = c
+            except:
+                ValueError
+                print(f"{n} is no integer. Skipping")
 
         return l
+
+
+# sheet = createExcelSheet(path='./goBraille Sprachtabelle.xlsx', activeSheet=3)
+# c = sheet.cell(row=3, column=3)
+# print(fillList(2,3,sheet))
