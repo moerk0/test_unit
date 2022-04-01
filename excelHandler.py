@@ -3,7 +3,7 @@ import openpyxl
 class Excel:
     def __init__(self, filename, lang, num_column, char_column) -> None:
         
-        self.languages = {          # TODO: Automate
+        self.languages = {          # TODO: Automate recognition process
             'US-Englisch' : 0,
             'Französisch' : 1,
             'Spanisch' : 2,
@@ -15,7 +15,7 @@ class Excel:
         self.workbook_origin.active = self.languages[lang]
         self.sheet = self.workbook_origin.active
         
-        self.workbook_dest = None # This represents the resulting table
+        self.workbook_result = None # This represents the resuls table
         # not yet
         # implemented
 
@@ -24,11 +24,11 @@ class Excel:
 
         
     def getDict(self):
-        row_cnt = self.sheet.max_row
+        row_cnt = self.sheet.max_row + 1    # I don't know why plus eins
         print(f"Max Rows: {row_cnt}")
         d = {}
 
-        for row in range(1, row_cnt + 1):
+        for row in range(1, row_cnt):
             c = self.sheet.cell(row=row, column=self.char_column)
             n = self.sheet.cell(row=row, column=self.num_column)
             c = c.value

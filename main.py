@@ -1,5 +1,4 @@
 
-#from fsm import states
 from GUI import Gooey 
 from excelHandler import Excel
 from test_unit import TestUnit
@@ -36,22 +35,23 @@ def failed():
 
 
 states = {
-    'init': True,
+    'init': True,                       # This is a bool because I need the objects globally accessable
     'w4start':lambda: wait4start(),
     'send': lambda:send(),
     'test': lambda:test(),
     'passed': lambda:passed(),
     'failed': lambda:failed(),
-    'error': "unexpected error occured"
+    'error': "unexpected error occured"# Not gonna happen :D
 }
 
 if __name__ == "__main__":
     
     gu = Gooey()
+    
     try:
-        ex = Excel('./sprachtabelle.xlsx', 'US-Englisch',2 ,3)
+        ex = Excel('./sprachtabelle.xlsx', 'Französisch',2 ,3)
         tu = TestUnit(ex.getDict())
-        gu.output_box_2.config(text=f"table openend, selected lang:{ex.sheet.title}")
+        gu.output_box_2.config(text=f"selected lang:{ex.sheet.title}, fetched {len(tu.inDict)} entries")
     except:
         gu.output_box_2.config(text="could not open, bad path?")
         states['init'] = False
@@ -63,6 +63,7 @@ if __name__ == "__main__":
         gu.output_box_1.config(text="bad port, please restart")
         states['init'] = False
 
+    
     if states['init'] is True:
         states['w4start']()
 
