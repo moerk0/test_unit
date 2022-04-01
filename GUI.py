@@ -5,13 +5,17 @@ class Gooey:
     def __init__(self) -> None:
         self.window = Tk()
         self.window.title("gooey for test unit")
-        self.button = Button(self.window, text='retrieve input', width=25, command=lambda: self.getInputChar())
+        self.button = Button(self.window)
         self.input_bar = Entry(self.window)
-        self.output_box = Label(self.window, text='this is an output box')
+        self.output_box_1 = Label(self.window)
+        self.output_box_2 = Label(self.window)
 
         self.input_bar.pack()
-        self.output_box.pack()
+        self.output_box_1.pack()
+        self.output_box_2.pack()
         self.button.pack()
+        
+    def runLoop(self):
         self.window.mainloop()
 
     def getInputChar(self):
@@ -25,7 +29,7 @@ class Gooey:
             inp = "no char or too many chars recieved"
             input = None
         
-        self.output_box.config(text=f"{inp}")
+        self.output_box_1.config(text=f"{inp}")
         return input
     
     def clear_input(self):
@@ -35,5 +39,3 @@ class Gooey:
         
     
 
-
-gui = Gooey()

@@ -1,35 +1,46 @@
 import openpyxl
 
-def createExcelSheet(path, activeSheet):
+class Excel:
+    def __init__(self, filename, lang, num_column, char_column) -> None:
+        
+        self.languages = {          # TODO: Automate
+            'US-Englisch' : 0,
+            'Französisch' : 1,
+            'Spanisch' : 2,
+            'Italienisch' : 3,
+            'Türkisch' : 4
+        }
 
-    """Active Sheet is the numerical index of all sheets, for US-ENG its 0,for french 1, etc."""
+        self.workbook_origin = openpyxl.load_workbook(filename=filename, data_only=True)
+        self.workbook_origin.active = self.languages[lang]
+        self.sheet = self.workbook_origin.active
+        
+        self.workbook_dest = None # This represents the resulting table
+        # not yet
+        # implemented
 
-    workbook = openpyxl.load_workbook(filename=path, data_only=True)            
-    workbook.active = activeSheet
-    sheet = workbook.active
-    print(f"availablue sheets: {workbook.sheetnames}")
-    print(f"selected sheet: {sheet.title}")
-    return sheet
+        self.num_column = num_column        # Where to find the in Numbers 
+        self.char_column = char_column      # Where to find the out Chars
 
-def fillList(num_column, char_column, sheet):
-        row_cnt = sheet.max_row
+        
+    def getDict(self):
+        row_cnt = self.sheet.max_row
         print(f"Max Rows: {row_cnt}")
-        l = {}
+        d = {}
 
-        for row in range(1, row_cnt):
-            c = sheet.cell(row=row, column=char_column)
-            n = sheet.cell(row=row, column=num_column)
+        for row in range(1, row_cnt + 1):
+            c = self.sheet.cell(row=row, column=self.char_column)
+            n = self.sheet.cell(row=row, column=self.num_column)
             c = c.value
             n = n.value
             try:
-                l[int(n)] = c
+                d[int(n)] = c
             except:
                 ValueError
                 print(f"{n} is no integer. Skipping")
 
-        return l
+        return d
 
+#ex = Excel('./sprachtabelle.xlsx', 'US-Englisch', 2,3)
+#ex.getDict()
 
-# sheet = createExcelSheet(path='./goBraille Sprachtabelle.xlsx', activeSheet=3)
-# c = sheet.cell(row=3, column=3)
-# print(fillList(2,3,sheet))

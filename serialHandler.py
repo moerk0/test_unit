@@ -1,17 +1,28 @@
-import serial
+from curses import baudrate
+from serial import Serial
 import time
-arduino = serial.Serial(port='/dev/ttyUSB0', baudrate=115200, timeout=.1)
 
-def write_read(x):
-    arduino.write(bytes(x, 'utf-8'))
-    arduino.write(b'\r\n')
-    time.sleep(0.05)
-    data = arduino.readline()
-    return data
+class SerialCom(Serial):
+    def __init__(self, port, baudrate) -> None:
+        super().__init__(port, baudrate=baudrate ,timeout=.1)
+        self.num = None
+        self.recievedChar = b''
 
-while True:
-    num = input("Enter a number: ") # Taking input from user
-    value = write_read(num)
-    print(value.decode('UTF-8'))
-    
+    def writeNum(self): # Arduino Code expects CRLF in order to return. There are better ways
+        self.write(bytes(self.num + '\r\n', 'utf-8'))
+
+    def readChar(self):
+        self.recievedChar = self.readline()
+        print(f" recieved Char : {self.recievedChar.decode('UTF-8')}")
+
+
+
+# arduino = SerialCom('/dev/ttyUSB0',115200)
+# time.sleep(2)
+# arduino.num = '12' # Taking input from user
+# arduino.writeNum()
+# time.sleep(0.05)
+# arduino.readChar()
+
+
 

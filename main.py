@@ -1,93 +1,70 @@
-from time import sleep
-from fsm import states
+
+#from fsm import states
 from GUI import Gooey 
-from excelHandler import createExcelSheet, fillList
-# from test_unit import TestUnit
-from serial import Serial
+from excelHandler import Excel
+from test_unit import TestUnit
+from serialHandler import SerialCom
 
-class TestUnit(object):
-    def __init__(self) -> None:
+def init():
+   
+    print("State: ini")
+
+def wait4start():
+    gu.button.configure(text= 'start Test', command= send)
+    print("State: w4s")
+
+def send():
+    if tu.idx < len(tu.keyList):
+        num = tu.keyList[tu.idx]
+        tu.idx+=1
+        print(f"State: send: {num}")
         
-        self.inChar = ''
-        self.idx = 0
+        gu.window.after(200)
+        states['passed']
+    else:
+        gu.output_box_1.config(text="finished")
 
-        self.sheet = createExcelSheet(path='./sprachtabelle.xlsx' , activeSheet=0)  #   './ascii-tablle.xlsx'
-        self.inDict = fillList(num_column=2, char_column=3, sheet=self.sheet) 
-        self.keyList = list(self.inDict)                                             # num index of dict.
+def test():
+    print("State: test")
 
-    def compare(self) -> bool:
-        testNum = self.keyList[self.idx]
+def passed():
+    print("State: passed")
+    states['send']
 
-        if self.inChar == self.inDict[ testNum  ]:
-            print('yay')
-            return True
-        
-        else:
-            print('nay')
-            return False
-
-# print(tu.inDict.keys())
+def failed():
+    print("State: failed")
 
 
-
-
-# while 1:
-#     if states[state_cnt] == 'tot_cnt':
-#         state_cnt = 0
-#     else:    
-#         states[state_cnt]()
-#         state_cnt += 1
-    
-#     sleep(1)
-
-
-
-arr = ['a', 'A', 'b']
+states = {
+    'init': True,
+    'w4start':lambda: wait4start(),
+    'send': lambda:send(),
+    'test': lambda:test(),
+    'passed': lambda:passed(),
+    'failed': lambda:failed(),
+    'error': "unexpected error occured"
+}
 
 if __name__ == "__main__":
-    states[0]()
-    tu = TestUnit()
-    ser = Serial(baudrate=115200, port='/dev/ttyUSB0', timeout=5)
-    if ser.is_open() is True:
-        ser.write('100')
-        
-        gu = Gooey()
-
-        print(ser.read())
-
-    tu.inChar = gu.getInputChar()
-    print(tu.inChar)
-
-
-
-#     def exit(self):
-
-#         return super().exit()
-
-
-
-
-#     tu = TestUnit()
-#     serialDevice = Serial()    
     
-#     Init().run(tu, serialDevice)
-    
-#     print(tu.inDict)
-#     states[0]
-    
-#class Init(State):
-#    def __init__(self) -> None:
-#        super().__init__()
-#
-#    def run(self, testunit,  serialobj) -> None:
-#        sheet = createExcelSheet(path='./ascii-table.xlsx', activeSheet=0)
-#        testunit.inDict = fillList(num_column=2, char_column=3, sheet=sheet)          
-#        
-#        #   this chunck could also be called at definition
-#        serialobj.baudrate = 115200
-#        serialobj.port = '/dev/ttyUSB0'
-#        serialobj.open()
-#    
-#        if serialobj.is_open:
-#            exit()
-#
+    gu = Gooey()
+    try:
+        ex = Excel('./sprachtabelle.xlsx', 'US-Englisch',2 ,3)
+        tu = TestUnit(ex.getDict())
+        gu.output_box_2.config(text=f"table openend, selected lang:{ex.sheet.title}")
+    except:
+        gu.output_box_2.config(text="could not open, bad path?")
+        states['init'] = False
+
+    try:
+        ardu = SerialCom('/dev/ttyUSB0', 115200)
+        gu.output_box_1.config(text=f"Port: {ardu.port} openend")
+    except:
+        gu.output_box_1.config(text="bad port, please restart")
+        states['init'] = False
+
+    if states['init'] is True:
+        states['w4start']()
+
+
+    gu.runLoop()
