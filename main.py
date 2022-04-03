@@ -3,51 +3,73 @@ from GUI import Gooey
 from excelHandler import Excel
 from test_unit import TestUnit
 from serialHandler import SerialCom
+import asyncio
 
-def init():
-   
-    print("State: ini")
+#async def run_gui(gui):
 
-def wait4start():
-    gu.button.configure(text= 'start Test', command= send)
-    print("State: w4s")
+
+def prepare():
+
+ # It is working but: veeeeeeeeery sketchy in the Forum they say: use Multithreading!
+    gu.window.update()  # top of the flop: Gooey is not well inherited … …
+##########################
+    if gu.running is True:
+        gu.button_handler('end', aborted)
+        
+        if tu.getNextNum() != 0:
+            states['send']()
+        else:
+            states['finished']()
+    else:
+        gu.button_handler('send', send)
+       
 
 def send():
-    if tu.idx < len(tu.keyList):
-        num = tu.keyList[tu.idx]
-        tu.idx+=1
-        print(f"State: send: {num}")
-        
-        gu.window.after(200)
-        states['passed']
-    else:
-        gu.output_box_1.config(text="finished")
+    gu.running = True
+
+    print(f"State: send: {tu.getNextNum()}")
+    gu.delay(1000)
+    states['passed']()
 
 def test():
     print("State: test")
 
 def passed():
     print("State: passed")
-    states['send']
+    states['prepare']()
 
 def failed():
     print("State: failed")
 
+def aborted():
+    gu.output_box_1.config(text='test suspended, Continue?')
+    gu.running = False
+    states['prepare']()
+
+def finished():
+    gu.output_box_1.config(text= 'fini')
+    gu.output_box_2.config(text= f'saving output to:{None}')
 
 states = {
     'init': True,                       # This is a bool because I need the objects globally accessable
-    'w4start':lambda: wait4start(),
-    'send': lambda:send(),
-    'test': lambda:test(),
-    'passed': lambda:passed(),
-    'failed': lambda:failed(),
-    'error': "unexpected error occured"# Not gonna happen :D
+    'prepare':  prepare,
+    'send':        send,
+    'test':        test,
+    'passed':    passed,
+    'failed':    failed,
+    'aborted':  aborted,
+    'finished':finished,
+    'error': "unexpected error occured"
 }
+
+
+
 
 if __name__ == "__main__":
     
     gu = Gooey()
     
+    ## command out to dry run
     try:
         ex = Excel('./sprachtabelle.xlsx', 'Französisch',2 ,3)
         tu = TestUnit(ex.getDict())
@@ -62,10 +84,13 @@ if __name__ == "__main__":
     except:
         gu.output_box_1.config(text="bad port, please restart")
         states['init'] = False
+    ##
 
-    
     if states['init'] is True:
-        states['w4start']()
+        states['prepare']()
 
-
+#This task get suspended
     gu.runLoop()
+
+
+

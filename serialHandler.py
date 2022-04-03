@@ -1,6 +1,4 @@
-from curses import baudrate
 from serial import Serial
-import time
 
 class SerialCom(Serial):
     def __init__(self, port, baudrate) -> None:

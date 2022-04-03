@@ -19,3 +19,13 @@ class TestUnit(object):
             print('nay')
             return False
 
+    def getNextNum(self):
+        if self.idx < len(self.keyList):        # Check if idx is in bound
+            num = self.keyList[self.idx]
+            self.idx+=1
+            
+            return num
+
+        else:
+            return 0
+
