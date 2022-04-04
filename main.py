@@ -26,6 +26,20 @@ def prepare():
 
 def send():
     gu.running = True
+    
+    # Set true after the button is pushed
+    if gu.running is not True:
+        gu.running = True
+    
+    
+    ardu.writeNum(tu.nextNum)
+
+    print(f"State: send: {tu.nextNum}")
+    gu.delay(5)
+    tu.inChar = ardu.readChar()
+    
+    tu.inChar = gu.getInputChar()
+    gu.window.update()
 
     print(f"State: send: {tu.getNextNum()}")
     gu.delay(1000)
@@ -84,6 +98,7 @@ if __name__ == "__main__":
     except:
         gu.output_box_1.config(text="bad port, please restart")
         states['init'] = False
+     
     ##
 
     if states['init'] is True:
