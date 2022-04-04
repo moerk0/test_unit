@@ -1,5 +1,17 @@
 import openpyxl
 
+class TestData:
+    
+    def __init__(self, num, char) -> None:
+        self.num = num
+        self.expected = char
+        self.recieved = None
+        self.passed = False
+    
+    def content(self):
+        return self.num, self.expected, self.recieved, self.passed
+
+
 class Excel:
     def __init__(self, filename, lang, num_column, char_column) -> None:
         
@@ -41,6 +53,32 @@ class Excel:
 
         return d
 
-#ex = Excel('./sprachtabelle.xlsx', 'US-Englisch', 2,3)
-#ex.getDict()
+
+    def getTestData(self):
+        row_cnt = self.sheet.max_row + 1    # I don't know why plus eins
+        print(f"Max Rows: {row_cnt}")
+        l = []
+
+        for row in range(1, row_cnt):
+            c = self.sheet.cell(row=row, column=self.char_column)
+            n = self.sheet.cell(row=row, column=self.num_column)
+            c = c.value
+            n = n.value
+            try:
+                l.append(TestData(int(n), str(c)))
+            except:
+                ValueError
+                print(f"{n} is no integer. Skipping")
+
+        return l
+
+
+
+# ex = Excel('./sprachtabelle.xlsx', 'Französisch', 2,3)
+# print(len(ex.getTestData()))
+# print(type(ex.getTestData()))
+# print(ex.getTestData()[0].num)
+# print(ex.getTestData()[0].expected)
+
+
 

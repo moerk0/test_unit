@@ -12,13 +12,13 @@ def prepare():
     gu.delay(5)
     gu.window.update() 
     
-    tu.getNextNum()   
 
     if gu.running is True:                  
         gu.button_handler('abort', aborted)   
 
                           #
-        if tu.nextNum != 0:                 #
+           
+        if tu.count_idx() is not False:                 #
             states['send']()                # Little Nest
         else:                               #
             states['finished']()            #
@@ -28,43 +28,33 @@ def prepare():
        
 
 def send():
-    gu.running = True
     
     # Set true after the button is pushed
     if gu.running is not True:
         gu.running = True
     
     
-    ardu.writeNum(tu.nextNum)
+    ardu.writeNum(tu.getNextNum())
 
-    print(f"State: send: {tu.nextNum}")
+    print(f"State: send: {tu.getNextNum()}")
     gu.delay(5)
-    tu.inChar = ardu.readChar()
+    #tu.getChar(ardu.readChar())
     
-    tu.inChar = gu.getInputChar()
+    tu.getChar(gu.getInputChar())
     gu.window.update()
 
-    print(f"recieved Char: {tu.inChar}")
 
-    gu.setInputChar(tu.inChar)
     gu.window.update()
 
     states['test']()
 
 def test():
-    print("State: test")
-    if tu.compare() is True:
-        states['passed']()
-    else:
-        states['failed']()
-
-def passed():
-    print("State: passed")
-    states['aborted']()
-
-def failed():
-    print("State: failed")
+    tu.compare()
+    print(tu.testdata[tu.idx].content())
+    
     states['prepare']()
+
+
 
 def aborted():
     gu.output_box_1.config(text='test suspended, Continue?')
@@ -82,8 +72,6 @@ states = {
     'prepare':  prepare,
     'send':        send,
     'test':        test,
-    'passed':    passed,
-    'failed':    failed,
     'aborted':  aborted,
     'finished':finished,
     'error': "unexpected error occured"
@@ -99,8 +87,8 @@ if __name__ == "__main__":
     ## command out to dry run
     try:
         ex = Excel('./sprachtabelle.xlsx', 'Französisch',2 ,3)
-        tu = TestUnit(ex.getDict())
-        gu.output_box_2.config(text=f"selected lang:{ex.sheet.title}, fetched {len(tu.inDict)} entries")
+        tu = TestUnit(ex.getTestData())
+        gu.output_box_2.config(text=f"selected lang:{ex.sheet.title}, fetched {len(tu.testdata)} entries")
     except:
         gu.output_box_2.config(text="could not open, bad path?")
         states['init'] = False
