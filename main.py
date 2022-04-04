@@ -3,43 +3,67 @@ from GUI import Gooey
 from excelHandler import Excel
 from test_unit import TestUnit
 from serialHandler import SerialCom
-import asyncio
 
-#async def run_gui(gui):
 
 
 def prepare():
 
- # It is working but: veeeeeeeeery sketchy in the Forum they say: use Multithreading!
-    gu.window.update()  # top of the flop: Gooey is not well inherited … …
-##########################
-    if gu.running is True:
-        gu.button_handler('end', aborted)
-        
-        if tu.getNextNum() != 0:
-            states['send']()
-        else:
-            states['finished']()
+ # It is working but: veeeeeeeeery sketchy in the Forum they say: better use Multithreading!
+    gu.delay(5)
+    gu.window.update() 
+    
+    tu.getNextNum()   
+
+    if gu.running is True:                  
+        gu.button_handler('abort', aborted)   
+
+                          #
+        if tu.nextNum != 0:                 #
+            states['send']()                # Little Nest
+        else:                               #
+            states['finished']()            #
+    
     else:
         gu.button_handler('send', send)
        
 
 def send():
-    gu.running = True
+    
+    # Set true after the button is pushed
+    if gu.running is not True:
+        gu.running = True
+    
+    
+    #ardu.writeNum(tu.nextNum)
 
-    print(f"State: send: {tu.getNextNum()}")
-    gu.delay(1000)
-    states['passed']()
+    print(f"State: send: {tu.nextNum}")
+    gu.delay(5)
+    #tu.inChar = ardu.readChar()
+    
+    tu.inChar = gu.getInputChar()
+    gu.window.update()
+
+    print(f"recieved Char: {tu.inChar}")
+
+    gu.setInputChar(tu.inChar)
+    gu.window.update()
+
+    states['test']()
 
 def test():
     print("State: test")
+    if tu.compare() is True:
+        states['passed']()
+    else:
+        states['failed']()
 
 def passed():
     print("State: passed")
-    states['prepare']()
+    states['aborted']()
 
 def failed():
     print("State: failed")
+    states['prepare']()
 
 def aborted():
     gu.output_box_1.config(text='test suspended, Continue?')
@@ -47,8 +71,10 @@ def aborted():
     states['prepare']()
 
 def finished():
-    gu.output_box_1.config(text= 'fini')
+    gu.output_box_1.config(text= 'fini, again?')
     gu.output_box_2.config(text= f'saving output to:{None}')
+    tu.idx = 0
+
 
 states = {
     'init': True,                       # This is a bool because I need the objects globally accessable
@@ -78,18 +104,18 @@ if __name__ == "__main__":
         gu.output_box_2.config(text="could not open, bad path?")
         states['init'] = False
 
-    try:
-        ardu = SerialCom('/dev/ttyUSB0', 115200)
-        gu.output_box_1.config(text=f"Port: {ardu.port} openend")
-    except:
-        gu.output_box_1.config(text="bad port, please restart")
-        states['init'] = False
+    #try:
+    #    ardu = SerialCom('/dev/ttyUSB0', 115200)
+    #    gu.output_box_1.config(text=f"Port: {ardu.port} openend")
+    #except:
+    #    gu.output_box_1.config(text="bad port, please restart")
+    #    states['init'] = False
     ##
 
     if states['init'] is True:
         states['prepare']()
 
-#This task get suspended
+#This task gets suspended
     gu.runLoop()
 
 

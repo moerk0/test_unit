@@ -1,4 +1,3 @@
-from fcntl import F_SEAL_SEAL
 from tkinter import *
 
 
@@ -36,6 +35,10 @@ class Gooey:
         self.output_box_1.config(text=f"{inp}")
         return input
     
+    #Tihs only corresponds to Arduino Code, hence it is not configured as BT-Keyboard
+    def setInputChar(self, char):
+        self.output_box_1.config(text=f"{char}")
+
     def clear_input(self):
             self.input_bar.delete(0, 'end')
 
@@ -52,3 +55,9 @@ class Gooey:
             self.running = True
         else:
             self.running = False
+
+
+
+# gu = Gooey()
+# gu.setInputChar('a')
+# gu.runLoop()
