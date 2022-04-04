@@ -18,7 +18,7 @@ def prepare():
 
                           #
            
-        if tu.count_idx() is not False:                 #
+        if tu.count_idx() is True:                #
             states['send']()                # Little Nest
         else:                               #
             states['finished']()            #
@@ -38,9 +38,9 @@ def send():
 
     print(f"State: send: {tu.getNextNum()}")
     gu.delay(5)
-    #tu.getChar(ardu.readChar())
+    tu.setChar(ardu.readChar())
     
-    tu.getChar(gu.getInputChar())
+    #tu.setChar(gu.getInputChar())
     gu.window.update()
 
 
@@ -64,7 +64,13 @@ def aborted():
 def finished():
     gu.output_box_1.config(text= 'fini, again?')
     gu.output_box_2.config(text= f'saving output to:{None}')
-    tu.idx = 0
+    gu.running = False
+    gu.button_handler('save',lambda: ex.saveResultFile('./results.xlsx'))
+    
+    ex.createResultFile()
+    ex.writeResults(tu.getResults())
+
+    
 
 
 states = {
@@ -84,15 +90,16 @@ if __name__ == "__main__":
     
     gu = Gooey()
     
-    ## command out to dry run
+   
     try:
-        ex = Excel('./sprachtabelle.xlsx', 'Französisch',2 ,3)
+        ex = Excel('./sprachtabelle.xlsx', 'US-Englisch',2 ,3) # adjust path and Language
         tu = TestUnit(ex.getTestData())
         gu.output_box_2.config(text=f"selected lang:{ex.sheet.title}, fetched {len(tu.testdata)} entries")
     except:
         gu.output_box_2.config(text="could not open, bad path?")
         states['init'] = False
-
+     
+     ## command out to dry run
     try:
         ardu = SerialCom('/dev/ttyUSB0', 115200)
         gu.output_box_1.config(text=f"Port: {ardu.port} openend")
@@ -105,7 +112,7 @@ if __name__ == "__main__":
     if states['init'] is True:
         states['prepare']()
 
-#This task gets suspended
+
     gu.runLoop()
 
 

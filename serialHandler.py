@@ -17,12 +17,12 @@ class SerialCom(Serial):
 
 
 
-arduino = SerialCom('/dev/ttyUSB0',115200)
-time.sleep(2)
-arduino.num = '12' # Taking input from user
-arduino.writeNum(995)
-time.sleep(0.05)
-arduino.readChar()
+# arduino = SerialCom('/dev/ttyUSB0',115200)
+# time.sleep(2)
+# arduino.num = '12' # Taking input from user
+# arduino.writeNum(995)
+# time.sleep(0.05)
+# arduino.readChar()
 
 
 

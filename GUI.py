@@ -26,14 +26,14 @@ class Gooey:
         
         try:
             ord(inp)          #       check if input is single ASCII char
-            input = inp
+            msg = inp
         except:
             TypeError
-            inp = "no char or too many chars recieved"
-            input = None
+            msg = "no char or too many chars recieved"
+            inp = None
         
-        self.output_box_1.config(text=f"{inp}")
-        return input
+        self.output_box_1.config(text=f"{msg}")
+        return inp
     
     #Tihs only corresponds to Arduino Code, hence it is not configured as BT-Keyboard
     def setInputChar(self, char):
@@ -49,12 +49,6 @@ class Gooey:
 
     def delay(self, delayT):
         self.window.after(delayT)
-
-    def setRunning(self):
-        if self.running is False:
-            self.running = True
-        else:
-            self.running = False
 
 
 
