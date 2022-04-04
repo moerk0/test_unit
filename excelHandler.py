@@ -34,7 +34,7 @@ class Excel:
             c = c.value
             n = n.value
             try:
-                d[int(n)] = c
+                d[int(n)] = str(c)
             except:
                 ValueError
                 print(f"{n} is no integer. Skipping")
