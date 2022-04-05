@@ -1,4 +1,5 @@
 from tkinter import *
+from turtle import Turtle
 
 
 class Gooey:
@@ -26,14 +27,14 @@ class Gooey:
         
         try:
             ord(inp)          #       check if input is single ASCII char
-            msg = inp
+            input = inp
         except:
             TypeError
-            msg = "no char or too many chars recieved"
-            inp = None
+        #    inp = "no char or too many chars recieved"
+            input = None
         
-        self.output_box_1.config(text=f"{msg}")
-        return inp
+        self.output_box_1.config(text=f"{inp}")
+        return input
     
     #Tihs only corresponds to Arduino Code, hence it is not configured as BT-Keyboard
     def setInputChar(self, char):
@@ -44,7 +45,8 @@ class Gooey:
 
 
     def button_handler(self, txt, cmd):
-        
+       
+        self.input_bar.focus_set()
         self.button.configure(text= txt, command= cmd)
 
     def delay(self, delayT):
@@ -53,5 +55,6 @@ class Gooey:
 
 
 # gu = Gooey()
-# gu.setInputChar('a')
+# gu.button_handler("getcha", gu.getInputChar)
+
 # gu.runLoop()

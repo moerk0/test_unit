@@ -40,6 +40,7 @@ class TestUnit(object):
 
 
     def setChar(self, c):
+        print(c)
         self.testdata[self.idx].recieved = c
    
     def getNextNum(self):

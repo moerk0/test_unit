@@ -1,7 +1,16 @@
+from operator import index
 from  openpyxl import Workbook, load_workbook
 from openpyxl.styles import PatternFill
 from openpyxl.styles.colors import Color
 from dataclasses import dataclass
+
+
+# The header of the output file. Modify if need. TODO: implement it as singleton in TestData
+# the passed parameter should always be the last param. The coloring of the file depends on it.
+# otherwise change index_of_passed in writeResults()
+head = ['num','expected Char', 'recieved Char', 'passed']
+len_h = len(head)
+
 
 @dataclass
 class TestData:
@@ -58,14 +67,14 @@ class Excel:
                 l.append(TestData(int(n), str(c)))
             except:
                 ValueError
-                print(f"{n} is no integer. Skipping")
+                print(f"Row:{row} - {n} is no integer. Skipping")
 
         return l
 
 
     def createResultFile(self):
-        """Create Sheets for all Languages listed in langugaes 
-        then check if the file already exists. If yes open if no create"""
+        """check if the file already exists. If yes open 
+        if no create empty file with languages"""
         
         try:
             self.workbook_result = load_workbook(self.outFile)
@@ -78,48 +87,53 @@ class Excel:
                 self.workbook_result.create_sheet(title= f'{l[i]}')
         
         
-        # 
+        #fetch active workbook
         self.workbook_result.active = self.languages[self.lang]
         self.sheet_result = self.workbook_result.active
-        self.sheet_result.append(['num','expected Char', 'recieved Char', 'passed'])
-        
+
+        #Write the header (see top line)
+        cnt = 0
+        for  col_num in self.sheet_result.iter_cols(max_col = len_h, min_row = 1):
+            col_num[0].value = head[cnt]
+            cnt+=1
 
     def writeResults(self, results):
-        length = len(results)
+        len_res = len(results)
 
         # Color Section assuming that the last value will be the test result
         red = Color(index=2)
         green = Color(index=3)
+        yellow = Color(index=5)
         color_col = 4
-        index_of_passed = 3                   # The 4th val returned by DataClass
+        index_of_passed = len_h - 1                   
         
-        # counter 
+        # iterator for data
         i = 0
-        row = 2 # assuming that the first Row of the file fits the headers
 
-        while i < length:
+        for rows in self.sheet_result.iter_rows(min_row = 2,max_col = 4, max_row = len_res):
             data = list(results[i].content())
-            self.sheet_result.append(data)
+            
+            rows[0].value = data[0]         # num
+            rows[1].value = data[1]         # expected
+            rows[2].value = data[2]         # recieved
+            rows[3].value = data[3]         # passed
 
+            # color for passed
             if data[index_of_passed] is True:
                 col = green
             else: 
                 col = red
+            rows[index_of_passed].fill = PatternFill(patternType='solid',fgColor=col)
 
-            self.sheet_result.cell(column = color_col, row = row).fill = PatternFill(patternType='solid',fgColor=col)
-            row +=1
+            # color in case that No data has been recieved during test
+            if data[2] is None:
+                rows[2].fill = PatternFill(patternType='solid',fgColor=yellow)
+
             i += 1
        
     def saveResultFile(self):
         self.workbook_result.save(filename= self.outFile)
        
-
-      
-
-
-
-
-   
 
 
 
