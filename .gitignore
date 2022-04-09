@@ -1,7 +1,8 @@
 /ascii-table.xls
 /excelHandler.py
 /tU.py
-/sprachtabelle.xlsx
+/sprachtabelle*
 /.venv
 /.~lock.*
 /__pycache__
+/sprachtabelle_results.xlsx

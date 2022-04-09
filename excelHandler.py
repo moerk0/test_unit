@@ -98,7 +98,7 @@ class Excel:
             cnt+=1
 
     def writeResults(self, results):
-        len_res = len(results)
+        len_res = len(results) + 1
 
         # Color Section assuming that the last value will be the test result
         red = Color(index=2)

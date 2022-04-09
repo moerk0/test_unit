@@ -40,12 +40,12 @@ def send():
         gu.running = True
     
     
-    ardu.writeNum(tu.getNextNum())
+   # ardu.writeNum(tu.getNextNum())
 
     print(f"State: send: {tu.getNextNum()}")
-    #tu.setChar(ardu.readChar())
+    #tu.setChar(ardu.readChar())                # use ardu.readchar to read from serial Monitor.
 
-    #as long as no char is 
+    #as long as no char is recieved and max tries not exceeded the code wil loop
     max_tries = 100
     tries = 0
     while gu.getInputChar() is None:
@@ -86,7 +86,7 @@ def finished():
 
 
 states = {
-    'init': True,                       # This is a bool because I need the objects globally accessable
+    'init': True,                      
     'prepare':  prepare,
     'send':        send,
     'test':        test,
@@ -104,19 +104,19 @@ if __name__ == "__main__":
     
    
     try:
-        ex = Excel('./sprachtabelle.xlsx', 'Türkisch',2 ,3) # adjust path and Language
+        ex = Excel('./sprachtabelle.xlsx', 'Türkisch',num_column=2 ,char_column=3) # adjust path and Language
         tu = TestUnit(ex.getTestData())
         gu.output_box_2.config(text=f"selected lang:{ex.sheet.title}, fetched {len(tu.testdata)} entries")
     except:
         gu.output_box_2.config(text="could not open, bad path?")
         states['init'] = False
      
-    try:
-        ardu = SerialCom('/dev/ttyUSB0', 115200)
-        gu.output_box_1.config(text=f"Port: {ardu.port} openend")
-    except:
-        gu.output_box_1.config(text="bad port, please restart")
-        states['init'] = False
+    # try:
+    #     ardu = SerialCom('/dev/ttyUSB0', 115200)
+    #     gu.output_box_1.config(text=f"Port: {ardu.port} openend")
+    # except:
+    #     gu.output_box_1.config(text="bad port, please restart")
+    #     states['init'] = False
      
     ##
 
