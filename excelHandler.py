@@ -1,16 +1,11 @@
-from operator import index
 from  openpyxl import Workbook, load_workbook
 from openpyxl.styles import PatternFill
 from openpyxl.styles.colors import Color
 from dataclasses import dataclass
 
 
-# The header of the output file. Modify if need. TODO: implement it as singleton in TestData
-# the passed parameter should always be the last param. The coloring of the file depends on it.
-# otherwise change index_of_passed in writeResults()
-head = ['num','expected Char', 'recieved Char', 'passed']
-len_h = len(head)
-
+# The header of the output file. Modify if need.
+values = {'num':0, 'expected':1, 'received':2, 'passed':3}
 
 @dataclass
 class TestData:
@@ -21,11 +16,11 @@ class TestData:
 
     num: int
     expected: str
-    recieved: str = None
+    received: str = None
     passed: bool =  False
     
     def content(self):
-        return self.num, self.expected, self.recieved, self.passed
+        return self.num, self.expected, self.received, self.passed
     
 
 
@@ -73,61 +68,65 @@ class Excel:
 
 
     def createResultFile(self):
-        """check if the file already exists. If yes open 
+        """check if the file already exists. If yes load 
         if no create empty file with languages"""
         
         try:
             self.workbook_result = load_workbook(self.outFile)
 
         except:
-            self.workbook_result = Workbook()
-            l = list(self.languages.keys())
-            self.workbook_result.active.title = l[0]
-            for i in range(1,len(l)):
+            l = list(self.languages.keys())                         #   Create list of Languages
+            h = list(values.keys())                                 #               of Headers
+
+            self.workbook_result = Workbook()                       #   Open new Workbook
+            self.workbook_result.active.title = l[0]                #   change title of first sheet
+            self.workbook_result.active.append(h)                   #   write Header to in the first line
+
+            for i in range(1,len(l)):                               #   create new sheets and write header
                 self.workbook_result.create_sheet(title= f'{l[i]}')
+                self.workbook_result.active = i
+                self.workbook_result.active.append(h)
         
         
-        #fetch active workbook
+        #select current language
         self.workbook_result.active = self.languages[self.lang]
         self.sheet_result = self.workbook_result.active
 
-        #Write the header (see top line)
-        cnt = 0
-        for  col_num in self.sheet_result.iter_cols(max_col = len_h, min_row = 1):
-            col_num[0].value = head[cnt]
-            cnt+=1
 
     def writeResults(self, results):
         len_res = len(results) + 1
 
-        # Color Section assuming that the last value will be the test result
+        # Color Section
         red = Color(index=2)
         green = Color(index=3)
         yellow = Color(index=5)
-        color_col = 4
-        index_of_passed = len_h - 1                   
+        white = PatternFill(fill_type=None)
         
-        # iterator for data
+        # iterator for data.
         i = 0
 
-        for rows in self.sheet_result.iter_rows(min_row = 2,max_col = 4, max_row = len_res):
+        for cols in self.sheet_result.iter_rows(min_row = 2, max_row = len_res):
             data = list(results[i].content())
             
-            rows[0].value = data[0]         # num
-            rows[1].value = data[1]         # expected
-            rows[2].value = data[2]         # recieved
-            rows[3].value = data[3]         # passed
+            cols[0].value = data[values['num']]
+            cols[1].value = data[values['expected']]        
+            cols[2].value = data[values['received']]        
+            cols[3].value = data[values['passed']]
 
             # color for passed
-            if data[index_of_passed] is True:
-                col = green
+            if data[values['passed']] is True:
+                color = green
             else: 
-                col = red
-            rows[index_of_passed].fill = PatternFill(patternType='solid',fgColor=col)
+                color = red
+            
+            cols[values['passed']].fill = PatternFill(patternType='solid',fgColor=color)
 
-            # color in case that No data has been recieved during test
-            if data[2] is None:
-                rows[2].fill = PatternFill(patternType='solid',fgColor=yellow)
+            # color in case that No data has been received during test
+            if data[values['received']] is None:
+                cols[values['received']].fill = PatternFill(patternType='solid',fgColor=yellow)
+            else:
+                cols[values['received']].fill = white
+
 
             i += 1
        
@@ -137,7 +136,7 @@ class Excel:
 
 
 
-# ex = Excel('./sprachtabelle.xlsx', 'Französisch', 2,3)
+# ex = Excel('../test_unit/sprachtabelle.xlsx', 'Französisch', 2,3)
 # ex.createResultFile()
 # ex.writeResults(ex.getTestData())
 # ex.saveResultFile()

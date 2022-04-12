@@ -23,7 +23,7 @@ class TestUnit(object):
     def compare(self) -> bool:
         
 
-        if self.testdata[self.idx].expected == self.testdata[self.idx].recieved:
+        if self.testdata[self.idx].expected == self.testdata[self.idx].received:
             self.testdata[self.idx].passed = True
             return True
         
@@ -41,7 +41,7 @@ class TestUnit(object):
 
     def setChar(self, c):
         print(c)
-        self.testdata[self.idx].recieved = c
+        self.testdata[self.idx].received = c
    
     def getNextNum(self):
         return self.testdata[self.idx].num

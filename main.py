@@ -74,7 +74,7 @@ def aborted():
     states['prepare']()
 
 def finished():
-    gu.output_box_1.config(text= 'fini, again?')
+    gu.output_box_1.config(text= 'fini, save?')
     gu.output_box_2.config(text= f'saving output to:{ex.outFile}')
     gu.running = False
     gu.button_handler('save',lambda: ex.saveResultFile())
