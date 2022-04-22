@@ -18,6 +18,7 @@ class SerialCom(Serial):
 
 
 # arduino = SerialCom('/dev/ttyUSB0',115200)
+# print(arduino.port)
 # time.sleep(2)
 # arduino.num = '12' # Taking input from user
 # arduino.writeNum(995)

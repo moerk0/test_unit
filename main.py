@@ -3,12 +3,6 @@ from GUI import Gooey
 from excelHandler import Excel
 from test_unit import TestUnit
 from serialHandler import SerialCom
-from threading import *
-
-def thread():
-    th1 = Thread(target=states['send']())
-    th1.start()
-
 
 def prepare():
 
@@ -118,7 +112,7 @@ if __name__ == "__main__":
     #     gu.output_box_1.config(text="bad port, please restart")
     #     states['init'] = False
      
-    ##
+    #
 
     if states['init'] is True:
         states['prepare']()
