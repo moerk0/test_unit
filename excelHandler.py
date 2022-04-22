@@ -31,16 +31,16 @@ class Excel:
         
         #Language Section
         self.languages = {          # TODO: Automate recognition process
-            'US-Englisch' : 0,
-            'Französisch' : 1,
-            'Spanisch' : 2,
-            'Italienisch' : 3,
-            'Türkisch' : 4,
-            'Deutsch' : 5
+            'US-ENGLISCH' : 0,
+            'FRANZÖSICH' : 1,
+            'SPANISCH' : 2,
+            'ITALIENISCH' : 3,
+            'TÜRKISCH' : 4,
+            'DEUTSCH' : 5
         }
         
-        self.lang = lang
-        self.workbook_origin.active = self.languages[lang]
+        self.lang = lang.upper()
+        self.workbook_origin.active = self.languages[self.lang]
         
 
         #Out Section        

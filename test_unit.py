@@ -23,7 +23,7 @@ class TestUnit(object):
     def compare(self) -> bool:
         
 
-        if self.testdata[self.idx].expected == self.testdata[self.idx].received:
+        if self.testdata[self.idx].cha == self.testdata[self.idx].received:
             self.testdata[self.idx].passed = True
             return True
         

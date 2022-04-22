@@ -104,9 +104,10 @@ if __name__ == "__main__":
     
    
     try:
-        ex = Excel('./sprachtabelle.xlsx', 'Türkisch',num_column=2 ,char_column=3) # adjust path and Language
-        tu = TestUnit(ex.getTestData())
-        gu.output_box_2.config(text=f"selected lang:{ex.sheet.title}, fetched {len(tu.testdata)} entries")
+        ex = Excel('deutsch','./data/sprachtabelle2.xlsx') # adjust path and Language
+        d = ex.getTestData()
+        tu = TestUnit(d)
+        gu.output_box_2.config(text=f"selected lang:{ex.workbook_origin.active.title}, fetched {len(tu.testdata)} entries")
     except:
         gu.output_box_2.config(text="could not open, bad path?")
         states['init'] = False
