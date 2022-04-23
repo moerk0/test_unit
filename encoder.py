@@ -1,7 +1,9 @@
 import logging as log
+from test_data import TestData, ReturnCode
+from excelHandler import Excel
 
 class Encoder:
-    def __init__(self,d, lang) -> None:
+    def __init__(self,d:'list[TestData]', lang) -> None:
         self.d = d
         self.lang = str(lang)
         self.filename = f'./data/braille_{self.lang[0:3].lower().replace("-","")}.h'
@@ -13,7 +15,7 @@ class Encoder:
     def header(self) -> str:
         s = "\n"
         special_char_map = {ord('Ä'):'A', ord('Ü'):'U', ord('Ö'):'O'}
-        guardname = self.filename[-12:-2].upper().replace('-','').translate(special_char_map)
+        guardname = self.filename[-13:-2].upper().replace('-','').translate(special_char_map).replace('/','')
        
         
 
@@ -34,12 +36,13 @@ class Encoder:
     
     def array(self,key,mod,dead,dmod) -> str:
         if key == None:
-         #   key = 0
-            pass
+            key = 0
 
-        elif key == "GRAVE":
+        elif key == "GRAVE" or key == "SCANCODE_GRAVE":
             key ='SCANCODE_GRAVE'
-            pass
+        
+        
+
         else:
             key = 'KEY_' + key
 
@@ -50,7 +53,7 @@ class Encoder:
 
         if dead == None:
             dead = 0
-        elif dead == "GRAVE":
+        elif dead == "GRAVE" or dead == "SCANCODE_GRAVE":
             dead = 'SCANCODE_GRAVE'
         else: 
             dead = 'DEADKEY_' + dead
@@ -100,7 +103,7 @@ class Encoder:
                     break
                 
                 # if data is shitty
-                elif data.color_key > 1 or data.color_mod > 1 or data.color_dmo > 1:
+                elif data.color_key >= ReturnCode.YELLOW or data.color_mod >= ReturnCode.YELLOW or data.color_dmo >= ReturnCode.YELLOW:
                     print(self.null_line(cnt), file=file)
                     idx += 1
 
@@ -116,7 +119,7 @@ class Encoder:
 
                 cnt+=1
                 
-            
+            log.info(f"{cnt} Rows encoded")
             print(self.end_of_file(), file=file)
 
 

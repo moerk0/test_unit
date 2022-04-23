@@ -24,8 +24,7 @@ class Excel:
         'dead':dead,
         'dmod':dmod,
         'rec':rec,
-        'passed': pas
-        
+       # 'passed': pas
         }
         
         #Language Section
@@ -39,7 +38,7 @@ class Excel:
         }
         
         self.lang = lang.upper()
-        self.workbook_origin.active = self.languages[self.lang]
+        self.workbook_origin.active = self.languages[self.lang]  # type: ignore
         
 
         #Out Section        
@@ -116,7 +115,7 @@ class Excel:
         pass
 
 
-    def createResultFile(self)-> list:
+    def createResultFile(self):
         """check if the file already exists. If yes load, 
         if no create empty file with languages"""
         if self.filename == self.outFile:
@@ -138,22 +137,22 @@ class Excel:
 
                 for i in range(1,len(l)):                               #   create new sheets and write header
                     self.workbook_result.create_sheet(title= f'{l[i]}')
-                    self.workbook_result.active = i
+                    self.workbook_result.active = i  # type: ignore
                     self.writeHeader(self.workbook_result.active)
 
             
             finally:
             #select current language
-                self.workbook_result.active = self.languages[self.lang]
+                self.workbook_result.active = self.languages[self.lang]  # type: ignore
                 self.sheet_result = self.workbook_result.active
 
 
    
-    def drawColors(self, *cels: "list[cell.Cell,ReturnCode]"):
+    def drawColors(self, *cels: list):
         colors = {
                 ReturnCode.BLANK.value:  PatternFill(fill_type=None),
-                ReturnCode.GREEN.value:  PatternFill(start_color='FFFF00',patternType='solid'),
-                ReturnCode.YELLOW.value: PatternFill(start_color='00FF00', patternType='solid'), 
+                ReturnCode.GREEN.value:  PatternFill(start_color='00FF00',patternType='solid'),
+                ReturnCode.YELLOW.value: PatternFill(start_color='FFFF00', patternType='solid'), 
                 ReturnCode.RED.value:    PatternFill(start_color='FF0000', patternType='solid')
                 }
         
@@ -202,17 +201,18 @@ class Excel:
             data : TestData = d[i]
 
             cr = self.workbook_origin.active.cell(row=data.row, column=self.columns['rec']+1)
-            cp = self.workbook_origin.active.cell(row=data.row, column=self.columns['passed']+1)
+            #cp = self.workbook_origin.active.cell(row=data.row, column=self.columns['passed']+1)
             cr.value = data.received
-            cp.value = data.passed
+            #cp.value = data.passed
             
             # color for passed
             if data.passed is True:
-                data.color_pas = ReturnCode.GREEN
-
-            if data.received is None:
+                data.color_rec = ReturnCode.GREEN
+            elif data.received is None:
                 data.color_rec = ReturnCode.YELLOW
-            self.drawColors([cr, data.color_rec.value], [cp, data.color_pas.value])            
+            else:
+                data.color_rec = ReturnCode.RED
+            self.drawColors([cr, data.color_rec.value])            
 
 
     def createBackup(self):
@@ -234,14 +234,14 @@ class Excel:
 
 
 
-ex = Excel('Türkisch','./data/sprachtabelle2.xlsx')
-d = ex.getTestData(71)
-# # print(len(d))
-for data in d:
-     data.validate_all()
+# ex = Excel('Türkisch','./data/sprachtabelle2.xlsx')
+# d = ex.getTestData(71)
+# # # print(len(d))
+# for data in d:
+#      data.validate_all()
 
 
-# # ex.createResultFile()
-ex.writeData(d)
-# # ex.writeResults(d)
-ex.saveResultFile()
+# # # ex.createResultFile()
+# ex.writeData(d)
+# ex.writeResults(d)
+# ex.saveResultFile()

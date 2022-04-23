@@ -1,13 +1,37 @@
-
 from GUI import Gooey 
 from excelHandler import Excel
 from test_unit import TestUnit
 from serialHandler import SerialCom
-from threading import *
-from test_data import OutLevel, ReturnCode
-def thread():
-    th1 = Thread(target=states['send']())
-    th1.start()
+from test_data import OutLevel, ReturnCode, log, TestData
+from threading import Thread
+from encoder import Encoder
+
+class Validator(Thread):
+    def __init__(self, d: 'list[TestData]', x:Excel)-> None:
+        super().__init__()
+        self.d = d
+        self.x = x
+    def run(self):
+        for data in self.d:
+            data.validate_all()
+        self.save()
+
+    def save(self):
+        self.x.writeData(self.d)
+        self.x.saveResultFile()
+
+
+class Encoderer(Thread):
+    def __init__(self,e : Encoder)-> None:
+        super().__init__()
+        self.d = d
+        self.e = e
+    def run(self) -> None:
+        self.e.run()
+
+
+
+
 
 
 def prepare():
@@ -19,8 +43,8 @@ def prepare():
 
     
 
-    if gu.running is True:                  
-        gu.button_handler('abort', aborted)   
+    if tu.running is True:                  
+        gu.button_handler(gu.button_3,'abort', aborted)   
 
                           #
            
@@ -30,19 +54,19 @@ def prepare():
             states['finished']()            #
     
     else:
-        gu.button_handler('send', send)
+        gu.button_handler(gu.button_3,'send', send)
        
 
 def send():
     
     # Set true after the button is pushed
-    if gu.running is not True:
-        gu.running = True
+    if tu.running is not True:
+        tu.running = True
     
     
    # ardu.writeNum(tu.getNextNum())
 
-    print(f"State: send: {tu.getNextNum()}")
+    log.info(f"State: send: {tu.getNextNum()}")
     #tu.setChar(ardu.readChar())                # use ardu.readchar to read from serial Monitor.
 
     #as long as no char is recieved and max tries not exceeded the code wil loop
@@ -64,22 +88,23 @@ def test():
     tu.compare()
     print(tu.testdata[tu.idx].content(OutLevel.TEST))
     
+   
+
     states['prepare']()
 
 
 def aborted():
     gu.output_box_2.config(text='test suspended, Continue?')
-    gu.running = False
+    tu.running = False
     gu.window.update()
     states['prepare']()
 
 def finished():
     gu.output_box_1.config(text= 'fini, save?')
     gu.output_box_2.config(text= f'saving output to:{ex.outFile}')
-    gu.running = False
-    gu.button_handler('save',lambda: ex.saveResultFile())
+    tu.running = False
+    gu.button_handler(gu.button_3,'save',ex.saveResultFile)
     
-    ex.createResultFile()
     ex.writeResults(tu.getResults())
 
     
@@ -104,10 +129,11 @@ if __name__ == "__main__":
     
    
     try:
-        ex = Excel('deutsch','./data/sprachtabelle2.xlsx') # adjust path and Language
+        ex = Excel('us-englisch','./data/sprachtabelle2.xlsx') # adjust path and Language
         d = ex.getTestData()
         tu = TestUnit(d)
-        gu.output_box_2.config(text=f"selected lang:{ex.workbook_origin.active.title}, fetched {len(tu.testdata)} entries")
+        enc = Encoder(d, ex.lang)
+        gu.output_box_2.config(text=f"selected lang:{ex.lang}, fetched {len(tu.testdata)} entries")
     except:
         gu.output_box_2.config(text="could not open, bad path?")
         states['init'] = False
@@ -123,7 +149,8 @@ if __name__ == "__main__":
 
     if states['init'] is True:
         states['prepare']()
-
+        gu.button_handler(gu.button_1, "Validata", Validator(d,ex).run)
+        gu.button_handler(gu.button_2, "Encode", enc.run)
 
     gu.runLoop()
 

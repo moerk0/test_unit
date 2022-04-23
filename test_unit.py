@@ -18,6 +18,7 @@ class TestUnit(object):
     def __init__(self, testdata) -> None:
         self.idx = -1
         self.testdata = testdata  #object that Holdes: num   expected    recieved    passed
+        self.running = False
 
 
     def compare(self) -> bool:

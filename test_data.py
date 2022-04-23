@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import logging as log
 from enum import IntEnum, Enum, auto
 
-log.basicConfig(level=log.DEBUG, format="%(levelname)s:%(message)s")
+log.basicConfig(level=log.INFO, format="%(levelname)s:%(message)s")
 
 @dataclass
 class ReturnCode(IntEnum):
@@ -59,7 +59,7 @@ class TestData:
     dead: str
     dmod : str
 
-    received: str = None
+    received = None
     passed: bool =  False
     
     #Color Codes: 0 = No Color, 1 = Green, 2 = Yellow, 3 = Red
@@ -154,8 +154,8 @@ class TestData:
                 
                  
     def validate_key(self):
-        key_names = ['SPACE','TAB','ENTER','PLUS', 'MINUS','QUOTE','PERIOD', 'SEMICOLON', 
-                    'LEFT_BRACE', 'RIGHT_BRACE','GRAVE', 'NON_US_BS','BACKSLASH','COMMA'] 
+        key_names = ['SPACE','TAB','ENTER','PLUS', 'MINUS','QUOTE','PERIOD', 'SEMICOLON', 'EQUAL','SLASH' 
+                    'LEFT_BRACE', 'RIGHT_BRACE','GRAVE', 'NON_US_BS','BACKSLASH','COMMA', 'SCANCODE_GRAVE'] 
         
         if self.key is None:
             log.warning(f"Row: {self.row} - Key is None")
@@ -165,14 +165,9 @@ class TestData:
                                                                 # Key is not a int Number
         else:
             self.key = str(self.key).strip()
-            ret = self.checkCase(self.key, "key")
+            ret = self.checkSpace(self.key, "key")
             self.key = ret[0]
             self.color_key = ret[1]
-
-            ret = self.checkList(self.key,key_names, "key")
-            self.key = ret[0]
-            if self.color_key < ret[1]:
-                    self.color_key = ret[1]
 
 
 
@@ -180,10 +175,20 @@ class TestData:
                 ret = self.checkASCII(self.key, 'key')
                 if self.color_key < ret:
                     self.color_key = ret
+                    
+                ret = self.checkSpace(self.key, "key")
+                self.key = ret[0]
+                if self.color_key < ret[1]:
+                    self.color_key = ret[1]
+                
 
             elif self.key.isdigit():
-                pass    
-
+                pass
+            else:
+                ret = self.checkList(self.key,key_names, "key")
+                self.key = ret[0]
+                if self.color_key < ret[1]:
+                    self.color_key = ret[1]
             
             
 
@@ -213,11 +218,11 @@ class TestData:
         modifier = ['SHIFT', 'RIGHT_ALT', 'LEFT_ALT', 'CTRL']
             
         if self.dmod is not None:
-            ret =  self.checkCase(self.dmod)
+            ret =  self.checkCase(self.dmod, "dmod")
             self.dmod =       ret[0]
             self.color_dmo = ret[1]
             
-            ret = self.checkSpace(self.dmod)
+            ret = self.checkSpace(self.dmod,"dmod")
             self.dmod =       ret[0]
             if ret[1] >= self.color_dmo:
                 self.color_dmo = ret[1]

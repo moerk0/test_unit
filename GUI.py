@@ -1,23 +1,32 @@
-from tkinter import *
-from turtle import Turtle
+from tkinter import Tk
+from tkinter.ttk import Button, Entry, Label
+from threading import Thread
+
+
 
 
 class Gooey:
     def __init__(self) -> None:
         self.window = Tk()
         self.window.title("gooey for test unit")
+        self.window.geometry("300x300")
+        
 
-        self.button = Button(self.window)
-        self.running = False
+        self.button_1 = Button(self.window)
+        self.button_2 = Button(self.window)
+        self.button_3 = Button(self.window)
+        
         self.input_bar = Entry(self.window)
 
         self.output_box_1 = Label(self.window)
         self.output_box_2 = Label(self.window)
 
-        self.input_bar.pack()
-        self.output_box_1.pack()
-        self.output_box_2.pack()
-        self.button.pack()
+        self.button_1.pack(pady=10)
+        self.button_2.pack(pady=10)
+        self.input_bar.pack(pady=20)
+        self.output_box_1.pack(pady=20)
+        self.output_box_2.pack(pady=20)
+        self.button_3.pack()
         
     def runLoop(self):
         self.window.mainloop()
@@ -29,11 +38,8 @@ class Gooey:
             ord(inp)          #       check if input is single ASCII char
             input = inp
         except:
-            TypeError
-        #    inp = "no char or too many chars recieved"
             input = None
         
-        self.output_box_1.config(text=f"{inp}")
         return input
     
     #Tihs only corresponds to Arduino Code, hence it is not configured as BT-Keyboard
@@ -44,17 +50,19 @@ class Gooey:
             self.input_bar.delete(0, 'end')
 
 
-    def button_handler(self, txt, cmd):
+    def button_handler(self,whichBut: Button , txt:str, cmd)->None:
        
         self.input_bar.focus_set()
-        self.button.configure(text= txt, command= cmd)
+        whichBut.configure(text= txt, command= cmd)
 
     def delay(self, delayT):
         self.window.after(delayT)
+    
+
+        
 
 
 
-# gu = Gooey()
+#gu = Gooey()
 # gu.button_handler("getcha", gu.getInputChar)
-
-# gu.runLoop()
+#gu.runLoop()
