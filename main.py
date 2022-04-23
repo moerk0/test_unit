@@ -4,7 +4,7 @@ from excelHandler import Excel
 from test_unit import TestUnit
 from serialHandler import SerialCom
 from threading import *
-
+from test_data import OutLevel, ReturnCode
 def thread():
     th1 = Thread(target=states['send']())
     th1.start()
@@ -12,7 +12,7 @@ def thread():
 
 def prepare():
 
- # It is working but: veeeeeeeeery sketchy in the Forum they say: better use Multithreading!
+ # It is working but: veeeeeeeeery sketchy!
     gu.delay(5)
     gu.clear_input()
     gu.window.update() 
@@ -62,7 +62,7 @@ def send():
 
 def test():
     tu.compare()
-    print(tu.testdata[tu.idx].content())
+    print(tu.testdata[tu.idx].content(OutLevel.TEST))
     
     states['prepare']()
 
