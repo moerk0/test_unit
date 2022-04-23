@@ -1,13 +1,26 @@
-import code
+from ast import Return
 from dataclasses import dataclass
 import logging as log
-from tkinter.tix import CheckList
+from enum import IntEnum, Enum, auto
 
 log.basicConfig(level=log.DEBUG, format="%(levelname)s:%(message)s")
 
+@dataclass
+class ReturnCode(IntEnum):
+    """"These Codes color the output file and determine if the giben data is faulty"""
+
+    BLANK = 0
+    GREEN = 1
+    YELLOW = 2
+    RED = 3
+
+class OutLevel(Enum):
+    INITIAL = auto()
+    TEST = auto()
 
 
 
+all_nums = [] # validator occupys global namespace here
 
 @dataclass
 class TestData:
@@ -50,30 +63,73 @@ class TestData:
     passed: bool =  False
     
     #Color Codes: 0 = No Color, 1 = Green, 2 = Yellow, 3 = Red
-    color_num: int = 0
-    color_cha: int = 0
-    color_key: int = 0
-    color_mod: int = 0
-    color_ded: int = 0
-    color_dmo: int = 0
+    color_num: ReturnCode = ReturnCode.BLANK
+    color_cha: ReturnCode = ReturnCode.BLANK
+    color_key: ReturnCode = ReturnCode.BLANK
+    color_mod: ReturnCode = ReturnCode.BLANK
+    color_ded: ReturnCode = ReturnCode.BLANK
+    color_dmo: ReturnCode = ReturnCode.BLANK
+    color_rec: ReturnCode = ReturnCode.BLANK
+    color_pas: ReturnCode = ReturnCode.RED
 
-    color_rec: int = 0
-    color_pas: int = 3
+
+    def checkASCII(self, arg, var_name) -> ReturnCode:
+        if str(arg).isascii():
+            code = ReturnCode.BLANK
+        else:
+            log.warning(f'\tRow: {self.row} - {var_name} >> {arg} << is not ASCII')
+            code = ReturnCode.YELLOW
+        return code
+
+    def checkCase(self,arg, var_name)->"tuple[str, ReturnCode]":
+        if str(arg).isupper() == False:
+            arg = arg.upper()
+            log.info(f'\tRow: {self.row} - {var_name} >> {arg} << is not upper. Corrected')
+            code = ReturnCode.GREEN
+        else:
+            code = ReturnCode.BLANK
+        return arg, code
+
+    def checkSpace(self, arg, var_name)-> "tuple[str, ReturnCode]":
+        if " " in arg:
+            arg = arg.strip()
+            log.info(f'\tRow: {self.row} - {var_name} >> {arg} << unexpected Space character. Corrected')
+            code = ReturnCode.GREEN
+        else:
+            code = ReturnCode.BLANK
+        return arg, code
+            
+
+    def checkList(self, arg:str, l, var_name:str) -> "tuple[str,ReturnCode]":
+        
+        if arg in l:
+            return arg, ReturnCode.BLANK
+        
+        else:
+            if arg.replace(" ", "_") in l:
+                arg = arg.replace(" ", "_")
+                log.info(f'\tRow: {self.row} - {var_name} >> {arg} << had no underscore')
+                return arg, ReturnCode.GREEN
+            else:
+                log.warning(f'Row: {self.row} - {var_name} >> {arg} << is not in Key list')
+                return arg, ReturnCode.YELLOW            
+               
+
+
 
     def validate_num(self):
-        
-        if self.num == 0:
-            
-            log.error(f'\tRow: {self.row} - Num >> {self.num} << is Null.')
-            self.color_num = 3
-            
+        if self.num in all_nums:
+            log.error(f'\tRow: {self.row} - Num >> {self.num} << Duplicate Entry!')
+            self.color_num = ReturnCode.RED
         else:
-            pass
+            all_nums.append(self.num)
+        
+ 
 
     def validate_cha(self):
         if self.cha is None:
             log.warning(f"Row: {self.row} - Cha is None")
-            self.color_cha = 2
+            self.color_cha = ReturnCode.YELLOW
 
         elif str(self.cha).isspace() == True:                        # if it is escaped char
             pass
@@ -88,104 +144,70 @@ class TestData:
                 try:
                     ord(self.cha)
                     log.info(f"\tRow: {self.row} - Cha >> {self.cha} << had a space character. Removed")
-                    self.color_cha = 1
+                    self.color_cha = ReturnCode.GREEN
                     self.cha = self.cha.strip()
                 except:
                     log.error(f"\tRow: {self.row} - Cha >> {self.cha} << is not a single character!")
-                    self.color_cha = 3
+                    self.color_cha = ReturnCode.RED
             else:
                 pass
                 
-                
-
-    def checkList(self, arg, l) -> int:
-        if arg in l:
-            return 0
-        else:
-            log.warning(f'Row: {self.row} - Mod >> {arg} << is not in Key list')
-            return  2            
-               
+                 
     def validate_key(self):
         key_names = ['SPACE','TAB','ENTER','PLUS', 'MINUS','QUOTE','PERIOD', 'SEMICOLON', 
                     'LEFT_BRACE', 'RIGHT_BRACE','GRAVE', 'NON_US_BS','BACKSLASH','COMMA'] 
         
         if self.key is None:
             log.warning(f"Row: {self.row} - Key is None")
-            self.color_key = 2
+            self.color_key = ReturnCode.YELLOW
         
 
                                                                 # Key is not a int Number
         else:
             self.key = str(self.key).strip()
-            ret = self.checkCase(self.key)
+            ret = self.checkCase(self.key, "key")
             self.key = ret[0]
             self.color_key = ret[1]
+
+            ret = self.checkList(self.key,key_names, "key")
+            self.key = ret[0]
+            if self.color_key < ret[1]:
+                    self.color_key = ret[1]
 
 
 
             if self.key.isalpha() and len(self.key)<=1:
-                ret = self.checkASCII(self.key)
+                ret = self.checkASCII(self.key, 'key')
                 if self.color_key < ret:
                     self.color_key = ret
 
             elif self.key.isdigit():
                 pass    
 
-            elif self.checkList(self.key, key_names) == 2:
-                self.color_key = 2    
+            
             
 
             
-    def checkASCII(self, arg) -> tuple:
-        if str(arg).isascii():
-            code = 0
-        else:
-            log.warning(f'\tRow: {self.row} - Mod >> {arg} << is not ASCII')
-            code = 2
-        return code
-
-    def checkCase(self,arg)->tuple:
-        if str(arg).isupper() == False:
-            arg = arg.upper()
-            log.info(f'\tRow: {self.row} -  >> {arg} << is not upper. Corrected')
-            code = 1
-        else:
-            code = 0
-        return arg, code
-
-    def checkSpace(self, arg):
-        if " " in arg:
-            arg = arg.strip()
-            log.info(f'\tRow: {self.row} - >> {arg} << unexpected Space character. Corrected')
-            code = 1
-        else:
-            code = 0
-        return arg, code
-            
+   
 
 
     def validate_mod(self):
         modifier = ['SHIFT', 'RIGHT_ALT', 'LEFT_ALT', 'CTRL']
             
         if self.mod is not None:
-            ret =  self.checkCase(self.mod)
+            ret =  self.checkCase(self.mod, 'Mod')
             self.mod =       ret[0]
             self.color_mod = ret[1]
             
-            ret = self.checkSpace(self.mod)
+            ret = self.checkSpace(self.mod, "Mod")
             self.mod =       ret[0]
             if ret[1] >= self.color_mod:
                 self.color_mod = ret[1]
 
-            if self.mod not in modifier:    
-                self.mod = self.mod.replace(" ", "_")
-                
-                if self.mod in modifier:
-                    log.info(f"\tRow: {self.row} - Mod >> {self.mod} << had no underscore. Corrected")
-                    self.color_mod = 1
-                else:
-                    log.warning(f"Row: {self.row} - Mod >> {self.mod} << is unkonwn modifier")
-                    self.color_mod = 2
+            ret = self.checkList(self.mod, modifier, "Mod")
+            self.mod =       ret[0]
+            if ret[1] >= self.color_mod:
+                self.color_mod = ret[1]
     
     def validate_dmod(self):
         modifier = ['SHIFT', 'RIGHT_ALT', 'LEFT_ALT', 'CTRL']
@@ -201,14 +223,14 @@ class TestData:
                 self.color_dmo = ret[1]
 
             if self.dmod not in modifier:    
-                self.dmod = self.dmod.replace(" ", "_")
+               
                 
                 if self.dmod in modifier:
                     log.info(f"\tRow: {self.row} - Mod >> {self.dmod} << had no underscore. Corrected")
-                    self.color_dmod = 1
+                    self.color_dmod = ReturnCode.GREEN
                 else:
                     log.warning(f"Row: {self.row} - Mod >> {self.dmod} << is unkonwn modifier")
-                    self.color_dmo = 2
+                    self.color_dmo = ReturnCode.YELLOW
                         
                    
        
@@ -222,28 +244,13 @@ class TestData:
             call_func()
         
 
-    def content(self, level="initial"):
-        levels = ["initial", "color", "test", "full"]
-        ouput = [
+    def content(self, level : OutLevel):
 
-            self.row, self.color_num, self.cha, self.key, self.mod,
-            self.received, self.passed, 
-            self.color_num,self.color_cha,self.color_key,self.color_mod,self.color_rec, self.color_pas
-            
-            ]
+        if level == OutLevel.INITIAL:
+            return {'Row':self.row,"Num": self.num, "Braille":self.brai,"Cha": self.cha,"Key":self.key, "Mod":self.mod, "Dead": self.dead, "Dmod": self.dmod}
 
-        if level not in levels:
-            log.error(f'{level} not vaild. Possible args: {levels}')
-        
-        else:
-            if level == "initial":
-                return *ouput[1:4],
-            if level == "color":
-                return *ouput[-6:-1],
-            if level == "test":
-                return *ouput[1,2,5,6],
-            if level == "full":
-                return *ouput,
+        elif level == OutLevel.TEST:
+            return {'Num': self.num, "cha": self.cha, "received": self.received, "passed": self.passed}
     
 
 # d = TestData(1,1,1,'\r ','A','SHIFT',None,None)

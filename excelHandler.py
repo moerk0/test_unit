@@ -1,8 +1,7 @@
-import colorsys
-from  openpyxl import Workbook, load_workbook
+from openpyxl import Workbook, load_workbook, cell
 from openpyxl.styles import PatternFill
 from openpyxl.styles.colors import Color
-from test_data import TestData, log
+from test_data import OutLevel, TestData, log, ReturnCode
 
 
 
@@ -10,14 +9,14 @@ from test_data import TestData, log
 
 class Excel:
     
-    def __init__(self, lang, filename='./data/sprachtabelle.xlsx', num=0, brai=1,cha=2,key=3,mod=4,dead=5,dmod=6,rec=8, pas=9) -> None:
+    def __init__(self, lang:str, filename='./data/sprachtabelle.xlsx', num=0, brai=1,cha=2,key=3,mod=4,dead=5,dmod=6,rec=8, pas=9) -> None:
         
         #In Section
         self.filename = filename
         self.workbook_origin = load_workbook(filename=filename, data_only=True)
         
         self.columns = {
-            'num':num,
+        'num':num,
         'brai' : brai,
         'cha':cha,
         'key':key,
@@ -67,7 +66,9 @@ class Excel:
             log.error(' Please specify the correct columns')
             exit()
 
-    def getTestData(self, single_row=None):
+    def getTestData(self, single_row=None)-> "list[TestData]":
+        """If you cast single row an integer value you will only get the specified row"""
+        
         row_cnt = self.workbook_origin.active.max_row    
         log.info(f"Max Rows: {row_cnt}")
         l = []
@@ -90,7 +91,7 @@ class Excel:
 
             dm = row[self.columns['dmod']].value
             
-            if row[0].row == 1:                                            #This should show the names of the columns
+            if row[0].row == 1:                                            #This displays the names of the columns
                 print(f'Column names: Bin->{n}  Brai->{b} cha->{c}  key->{k}  mod->{m}  deadkey->{d}  dmod->{dm}')
                 self.verifyColumns(n,c,b,k,m,d,dm)
                 
@@ -99,12 +100,14 @@ class Excel:
                 
                 try:
                     d = TestData(row[0].row ,int(n), b,c, k, m, d, dm)
-                    l.append(d)
-
+                    if n != 0: 
+                        l.append(d)
+                    else:
+                        log.warning(f'row: {row[0].row} - {n} is NULL, skipped')
                 except:
                     log.warning(f'row: {row[0].row} - {n} is no integer, skipped')
                 
-                log.debug(f'{d}')
+                log.debug(f'{d.content(OutLevel.INITIAL)}')
                 
                                 
         return l
@@ -146,12 +149,13 @@ class Excel:
 
 
    
-    def drawColors(self, *cels):
-        red = PatternFill(start_color='FF0000', fill_type='solid')
-        green = PatternFill(start_color='00FF00', patternType='solid')
-        yellow = PatternFill(start_color='FFFF00',patternType='solid')
-        blank = PatternFill(fill_type=None)
-        colors = {0:blank,1:green,2:yellow, 3:red}
+    def drawColors(self, *cels: "list[cell.Cell,ReturnCode]"):
+        colors = {
+                ReturnCode.BLANK.value:  PatternFill(fill_type=None),
+                ReturnCode.GREEN.value:  PatternFill(start_color='FFFF00',patternType='solid'),
+                ReturnCode.YELLOW.value: PatternFill(start_color='00FF00', patternType='solid'), 
+                ReturnCode.RED.value:    PatternFill(start_color='FF0000', patternType='solid')
+                }
         
         try:
             for cel in cels:
@@ -160,21 +164,21 @@ class Excel:
         except:
             log.error(f'{cel} is {type(cel)}. Required Format: list [cell.obj, int(color_code)]')
 
-    def writeData(self, d):
+    def writeData(self, d: "list[TestData]"):
         len_res = len(d)
 
         for i in range(len_res):
-            data = d[i]
+            data : TestData = d[i]
 
             #cn = self.workbook_origin.active.cell(row=d[i].row, column=self.columns['num']+1)
-            cc = self.workbook_origin.active.cell(row=d[i].row, column=self.columns['cha']+1)
-            ck = self.workbook_origin.active.cell(row=d[i].row, column=self.columns['key']+1)
-            cm = self.workbook_origin.active.cell(row=d[i].row, column=self.columns['mod']+1)
-            cd = self.workbook_origin.active.cell(row=d[i].row, column=self.columns['dead']+1)
-            cdm = self.workbook_origin.active.cell(row=d[i].row, column=self.columns['dmod']+1)
+            cc = self.workbook_origin.active.cell(row=data.row, column=self.columns['cha']+1)
+            ck = self.workbook_origin.active.cell(row=data.row, column=self.columns['key']+1)
+            cm = self.workbook_origin.active.cell(row=data.row, column=self.columns['mod']+1)
+            cd = self.workbook_origin.active.cell(row=data.row, column=self.columns['dead']+1)
+            cdm = self.workbook_origin.active.cell(row=data.row, column=self.columns['dmod']+1)
             # row[self.outColumns['dead']].value = data.dead        
             
-            self.drawColors([cc, data.color_cha],[ck, data.color_key],[cm, data.color_mod], [cdm,data.color_dmo])
+            self.drawColors([cc, data.color_cha.value],[ck, data.color_key.value],[cm, data.color_mod.value], [cdm,data.color_dmo.value])
             
             cc.value = data.cha
             ck.value = data.key        
@@ -187,7 +191,7 @@ class Excel:
 
    
 
-    def writeResults(self, d):
+    def writeResults(self, d : list):
         """
         Always call createResultFile before writing the results,
         change result columns here
@@ -195,20 +199,20 @@ class Excel:
         len_res = len(d)
 
         for i in range(len_res):
-            data = d[i]
-            cr = self.workbook_origin.active.cell(row=d[i].row, column=self.columns['rec']+1)
-            cp = self.workbook_origin.active.cell(row=d[i].row, column=self.columns['passed']+1)
+            data : TestData = d[i]
+
+            cr = self.workbook_origin.active.cell(row=data.row, column=self.columns['rec']+1)
+            cp = self.workbook_origin.active.cell(row=data.row, column=self.columns['passed']+1)
             cr.value = data.received
             cp.value = data.passed
             
             # color for passed
             if data.passed is True:
-                data.color_pas = 1
+                data.color_pas = ReturnCode.GREEN
 
-            # color in case that No data has been received during test
             if data.received is None:
-                data.color_rec = 2
-            self.drawColors([cr, data.color_rec], [cp, data.color_pas])            
+                data.color_rec = ReturnCode.YELLOW
+            self.drawColors([cr, data.color_rec.value], [cp, data.color_pas.value])            
 
 
     def createBackup(self):
@@ -230,13 +234,14 @@ class Excel:
 
 
 
-# ex = Excel('Deutsch','./data/sprachtabelle2.xlsx')
-# d = ex.getTestData(71)
+ex = Excel('Türkisch','./data/sprachtabelle2.xlsx')
+d = ex.getTestData(71)
 # # print(len(d))
-# for data in d:
-#     data.validate_all()
+for data in d:
+     data.validate_all()
+
 
 # # ex.createResultFile()
-# ex.writeData(d)
+ex.writeData(d)
 # # ex.writeResults(d)
-# ex.saveResultFile()
+ex.saveResultFile()
