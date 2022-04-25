@@ -192,6 +192,9 @@ class TestData:
             "COMMA",
             "SCANCODE_GRAVE",
         ]
+        ret = self.checkCase(self.key, "key")
+        self.key = ret[0]
+        self.color_key = ret[1]
 
         if self.key is None:
             log.warning(f"Row: {self.row} - Key is None")
