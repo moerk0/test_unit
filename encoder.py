@@ -26,9 +26,6 @@ class Encoder:
         ifguard = (f"#ifndef __{guardname}_H__", f"#define __{guardname}_H__", 2 * "\n")
 
         include = (
-            "#include <stdio.h>",
-            "#include <string.h>",
-            "#include <stdlib.h>",
             "#include <stdint.h>",
             '#include "keylayouts.h"',
             2 * "\n",
@@ -36,8 +33,8 @@ class Encoder:
 
         declaration = (
             "// Erich Schmids 8 Keys Braille",
-            "const static uint16_t chord_id_keycode[256][4] = {",
-            "//            {char, char_modifier, deadkey, deadkey_modifier}",
+            "const static uint8_t chord_id_keycode[256][4] = {",
+            "\t//            {char, char_modifier, deadkey, deadkey_modifier}",
         )
         head = ifguard + include + declaration
         return s.join(head)
@@ -73,7 +70,7 @@ class Encoder:
         return "{" + s + "},"
 
     def num(self, num) -> str:
-        s = f"/* {num}  */"
+        s = f"\t/* {num}  */"
         return s
 
     def braille_cha(self, brai, cha) -> str:
@@ -81,7 +78,7 @@ class Encoder:
         return s
 
     def null_line(self, num) -> str:
-        s = f"/* {num}  */\t" + "{0, 0, 0, 0}," + 59 * " " + "// 0"
+        s = f"\t/* {num}  */\t" + "{0, 0, 0, 0}," + 59 * " " + "// 0"
         return s
 
     def end_of_file(self) -> str:

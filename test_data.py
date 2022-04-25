@@ -1,6 +1,9 @@
-from dataclasses import dataclass
 import logging as log
-from enum import IntEnum, Enum, auto
+from abc import ABC, abstractmethod
+from ast import Return
+from dataclasses import dataclass
+from enum import Enum, IntEnum, auto
+from typing import Optional
 
 log.basicConfig(level=log.INFO, format="%(levelname)s:%(message)s")
 
@@ -14,27 +17,126 @@ class ReturnCode(IntEnum):
     RED = 3
 
 
+class ValidatorErrors(ABC):
+    def __init__(self, row: int, var_name: str, arg, msg: str, errtype: ReturnCode):
+        self.errtype = errtype
+        if errtype == ReturnCode.YELLOW:
+            log.warning(f"Row: {row} - {var_name} >> {arg} << {msg}")
+        elif errtype == ReturnCode.GREEN:
+            log.info(f"Row: {row} - {var_name} >> {arg} << {msg}")
+        elif errtype == ReturnCode.RED:
+            log.error(f"Row: {row} - {var_name} >> {arg} << {msg}")
+
+    def return_error_code(self) -> ReturnCode:
+        return self.errtype
+
+
+class ASCIIError(ValidatorErrors):
+    def __init__(self, row, var_name, arg):
+        super().__init__(row, var_name, arg, " is not Ascii", ReturnCode.YELLOW)
+
+    def return_error_code(self) -> ReturnCode:
+        return super().return_error_code()
+
+
+class SpaceError(ValidatorErrors):
+    def __init__(self, row, var_name, arg):
+        super().__init__(
+            row, var_name, arg, "had a space character. Removed", ReturnCode.GREEN
+        )
+
+    def return_error_code(self) -> ReturnCode:
+        return super().return_error_code()
+
+
+class CaseError(ValidatorErrors):
+    def __init__(self, row, var_name, arg):
+        super().__init__(row, var_name, arg, "was not upper", ReturnCode.GREEN)
+
+    def return_error_code(self):
+        return super().return_error_code()
+
+
+class ListError(ValidatorErrors):
+    def __init__(self, row, var_name, arg):
+        super().__init__(row, var_name, arg, " not in The list", ReturnCode.YELLOW)
+
+    def return_error_code(self):
+        return super().return_error_code()
+
+
+class NumError(ValidatorErrors):
+    def __init__(self, row, var_name, arg):
+        super().__init__(row, var_name, arg, " is Integer Type", ReturnCode.YELLOW)
+
+    def return_error_code(self):
+        return super().return_error_code()
+
+
+class EntryError(ValidatorErrors):
+    def __init__(self, row, var_name, arg):
+        super().__init__(row, var_name, arg, "Entry exists twice", ReturnCode.RED)
+
+    def return_error_code(self) -> ReturnCode:
+        return super().return_error_code()
+
+
+class TooLongError(ValidatorErrors):
+    def __init__(self, row, var_name, arg):
+        super().__init__(row, var_name, arg, "is too long", ReturnCode.YELLOW)
+
+    def return_error_code(self) -> ReturnCode:
+        return super().return_error_code()
+
+
+class UnderscoreError(ValidatorErrors):
+    def __init__(self, row, var_name, arg):
+        super().__init__(row, var_name, arg, "had no underscore", ReturnCode.GREEN)
+
+    def return_error_code(self) -> ReturnCode:
+        return super().return_error_code()
+
+
+class MappedKeyError(ValidatorErrors):
+    def __init__(self, row, var_name, arg):
+        super().__init__(
+            row,
+            var_name,
+            arg,
+            " was found in the mapping and changed",
+            ReturnCode.GREEN,
+        )
+
+    def return_error_code(self):
+        return super().return_error_code()
+
+
+class NoneError(ValidatorErrors):
+    def __init__(self, row, var_name, arg):
+        super().__init__(row, var_name, arg, " is none Type", ReturnCode.YELLOW)
+
+    def return_error_code(self):
+        return super().return_error_code()
+
+
+class UnkownError(ValidatorErrors):
+    def __init__(self, row, var_name, arg):
+        super().__init__(
+            row, var_name, arg, " Unkown Exception, call the programmer", ReturnCode.RED
+        )
+
+    def return_error_code(self):
+        return super().return_error_code()
+
+
 class OutLevel(Enum):
     INITIAL = auto()
     TEST = auto()
+    COLOR_CODES = auto()
+    VALUE_CODE_PAIR = auto()
 
 
-class DataIndex(Enum):
-    ROW = auto()
-    NUM = auto()
-    BRAI = auto()
-
-    CHA = auto()
-    KEY = auto()
-    MOD = auto()
-    DEAD = auto()
-    DMOD = auto()
-
-    REC = auto()
-    PASSED = auto()
-
-
-all_nums = []  # validator occupys global namespace here
+all_nums = []
 
 
 @dataclass
@@ -65,7 +167,7 @@ class TestData:
     row: int
 
     num: int
-    brai: str
+    brai: int
     cha: str
 
     key: str
@@ -87,202 +189,178 @@ class TestData:
     color_rec: ReturnCode = ReturnCode.BLANK
     color_pas: ReturnCode = ReturnCode.RED
 
-    def checkASCII(self, arg, var_name) -> ReturnCode:
-        if str(arg).isascii():
-            code = ReturnCode.BLANK
-        else:
-            log.warning(f"\tRow: {self.row} - {var_name} >> {arg} << is not ASCII")
-            code = ReturnCode.YELLOW
-        return code
-
-    def checkCase(self, arg, var_name) -> "tuple[str, ReturnCode]":
-        if str(arg).isupper() == False:
-            arg = arg.upper()
-            log.info(
-                f"\tRow: {self.row} - {var_name} >> {arg} << is not upper. Corrected"
-            )
-            code = ReturnCode.GREEN
-        else:
-            code = ReturnCode.BLANK
-        return arg, code
-
-    def checkSpace(self, arg, var_name) -> "tuple[str, ReturnCode]":
-        if " " in arg:
-            arg = arg.strip()
-            log.info(
-                f"\tRow: {self.row} - {var_name} >> {arg} << unexpected Space character. Corrected"
-            )
-            code = ReturnCode.GREEN
-        else:
-            code = ReturnCode.BLANK
-        return arg, code
-
-    def checkList(self, arg: str, l, var_name: str) -> "tuple[str,ReturnCode]":
-
-        if arg in l:
-            return arg, ReturnCode.BLANK
-
-        else:
-            if arg.replace(" ", "_") in l:
-                arg = arg.replace(" ", "_")
-                log.info(
-                    f"\tRow: {self.row} - {var_name} >> {arg} << had no underscore"
-                )
-                return arg, ReturnCode.GREEN
-            else:
-                log.warning(
-                    f"Row: {self.row} - {var_name} >> {arg} << is not in Key list"
-                )
-                return arg, ReturnCode.YELLOW
-
-    def validate_num(self):
+    def validate_num(self, all_nums: list) -> Optional[int]:
         if self.num in all_nums:
-            log.error(f"\tRow: {self.row} - Num >> {self.num} << Duplicate Entry!")
-            self.color_num = ReturnCode.RED
+            self.color_num = EntryError(self.row, "Num", self.num).return_error_code()
         else:
-            all_nums.append(self.num)
+            return self.num
 
     def validate_cha(self):
         if self.cha is None:
-            log.warning(f"Row: {self.row} - Cha is None")
-            self.color_cha = ReturnCode.YELLOW
+            self.color_cha = NoneError(self.row, "Char", self.cha).return_error_code()
 
-        elif str(self.cha).isspace() == True:  # if it is escaped char
+        elif isinstance(self.cha, int):
             pass
 
+        elif len(self.cha) <= 1:
+            pass
+
+        elif len(self.cha.strip()) > 1:
+            self.color_cha = TooLongError(
+                self.row, "Char", self.cha
+            ).return_error_code()
+
+        elif " " in self.cha:
+            self.cha = self.cha.strip()
+            self.color_cha = SpaceError(self.row, "Char", self.cha).return_error_code()
+
         else:
-            self.cha = str(self.cha)
-            len_cha = len(self.cha)
-
-            if len_cha > 1:
-                self.cha = self.cha.strip()
-
-                try:
-                    ord(self.cha)
-                    log.info(
-                        f"\tRow: {self.row} - Cha >> {self.cha} << had a space character. Removed"
-                    )
-                    self.color_cha = ReturnCode.GREEN
-                    self.cha = self.cha.strip()
-                except:
-                    log.error(
-                        f"\tRow: {self.row} - Cha >> {self.cha} << is not a single character!"
-                    )
-                    self.color_cha = ReturnCode.RED
-            else:
-                pass
+            self.color_cha = UnkownError(self.row, "Char", self.cha).return_error_code()
 
     def validate_key(self):
-        key_names = [
+        key_non_mapped_names = [
             "SPACE",
             "TAB",
             "ENTER",
-            "PLUS",
-            "MINUS",
-            "QUOTE",
-            "PERIOD",
-            "SEMICOLON",
-            "EQUAL",
-            "SLASH",
-            "LEFT_BRACE",
-            "RIGHT_BRACE",
             "GRAVE",
-            "NON_US_BS",
             "BACKSLASH",
-            "COMMA",
             "SCANCODE_GRAVE",
+            "BACKSPACE",
+            "LEFT",
+            "RIGHT",
         ]
-        ret = self.checkCase(self.key, "key")
-        self.key = ret[0]
-        self.color_key = ret[1]
+        key_mapped_names = {
+            "+": "PLUS",
+            "-": "MINUS",
+            ",": "COMMA",
+            "<": "NON_US_BS",
+            "[": "RIGHT_BRACE",
+            "]": "LEFT_BRACE",
+            '"': "QUOTE",
+            "=": "EQUAL",
+            "/": "SLASH",
+            ".": "PERIOD",
+            ";": "SEMICOLON",
+            r"\ ": "BACKSALSH",
+        }
 
         if self.key is None:
-            log.warning(f"Row: {self.row} - Key is None")
-            self.color_key = ReturnCode.YELLOW
+            self.color_key = NoneError(self.row, "Key", self.key).return_error_code()
 
-            # Key is not a int Number
+        elif isinstance(self.key, int):
+            self.key = str(self.key)
+
         else:
-            self.key = str(self.key).strip()
-            ret = self.checkSpace(self.key, "key")
-            self.key = ret[0]
-            self.color_key = ret[1]
 
-            if self.key.isalpha() and len(self.key) <= 1:
-                ret = self.checkASCII(self.key, "key")
-                if self.color_key < ret:
-                    self.color_key = ret
+            if " " in self.key:
+                self.key = self.key.strip()
+                self.color_key = SpaceError(
+                    self.row, "key", self.key
+                ).return_error_code()
 
-                ret = self.checkSpace(self.key, "key")
-                self.key = ret[0]
-                if self.color_key < ret[1]:
-                    self.color_key = ret[1]
+            if " " in self.key:
+                self.key = self.key.replace(" ", "_")
+                self.color_key = UnderscoreError(
+                    self.row, "key", self.key
+                ).return_error_code()
 
-            elif self.key.isdigit():
-                pass
+            if self.key.isidentifier() or self.key.isdigit():
+                if self.key.isdigit():
+                    pass
+
+                elif self.key.isascii() == False:
+                    self.color_key = ASCIIError(
+                        self.row, "key", self.key
+                    ).return_error_code()
+
+                elif self.key.isupper() == False:
+                    self.key = self.key.upper()
+                    self.color_key = CaseError(
+                        self.row, "key", self.key
+                    ).return_error_code()
+
+                if (
+                    len(self.key) > 1
+                    and self.key not in key_non_mapped_names
+                    and self.key not in key_mapped_names.values()
+                ):
+                    self.color_key = ListError(
+                        self.row, "key", self.key
+                    ).return_error_code()
+
+            elif self.key in key_mapped_names.keys():
+                self.key = key_mapped_names[self.key]
+                self.color_key = MappedKeyError(
+                    self.row, "key", self.key
+                ).return_error_code()
+
             else:
-                ret = self.checkList(self.key, key_names, "key")
-                self.key = ret[0]
-                if self.color_key < ret[1]:
-                    self.color_key = ret[1]
+                self.color_key = UnkownError(
+                    self.row, "Key", self.key
+                ).return_error_code()
 
-    def validate_mod(self):
-        modifier = ["SHIFT", "RIGHT_ALT", "LEFT_ALT", "CTRL"]
+    @staticmethod
+    def validate_mods_n_deads(
+        var_name: str, row: int, arg: str
+    ) -> "Optional[tuple[str, ReturnCode]]":
+        color_code: ReturnCode = ReturnCode.BLANK
+        modifier = ["SHIFT", "RIGHT_ALT", "LEFT_ALT", "CTRL", "GUI"]
+        deadkeys = [
+            "CIRCUMFLEX",
+            "ACUTE_ACCENT",
+            "GRAVE",
+            "SCANCODE_GRAVE",
+            "DEADKEY_CIRCUMFLEX",
+        ]
 
-        if self.mod is not None:
-            ret = self.checkCase(self.mod, "Mod")
+        if arg is not None:
+            if isinstance(arg, int):
+                color_code = NumError(row, var_name, arg).return_error_code()
+            else:
+                if arg.isupper() == False:
+                    arg = arg.upper()
+                    color_code = CaseError(row, var_name, arg).return_error_code()
+
+                if " " in arg:
+                    arg = arg.strip()
+                    color_code = SpaceError(row, var_name, arg).return_error_code()
+
+                if " " in arg:
+                    arg = arg.replace(" ", "_")
+                    color_code = UnderscoreError(row, var_name, arg).return_error_code()
+
+                if (
+                    arg in modifier
+                    and var_name.lower() == "mod"
+                    or arg in modifier
+                    and var_name.lower() == "dmod"
+                ):
+                    pass
+
+                elif arg in deadkeys and var_name.lower() == "dead":
+                    pass
+
+                else:
+                    color_code = ListError(row, var_name, arg).return_error_code()
+
+            return arg, color_code
+
+    def validate_all(self):
+
+        self.validate_cha()
+        self.validate_key()
+
+        if (ret := self.validate_mods_n_deads("mod", self.row, self.mod)) != None:
             self.mod = ret[0]
             self.color_mod = ret[1]
 
-            ret = self.checkSpace(self.mod, "Mod")
-            self.mod = ret[0]
-            if ret[1] >= self.color_mod:
-                self.color_mod = ret[1]
+        if (ret := self.validate_mods_n_deads("dead", self.row, self.dead)) != None:
+            self.dead = ret[0]
+            self.color_ded = ret[1]
 
-            ret = self.checkList(self.mod, modifier, "Mod")
-            self.mod = ret[0]
-            if ret[1] >= self.color_mod:
-                self.color_mod = ret[1]
-
-    def validate_dmod(self):
-        modifier = ["SHIFT", "RIGHT_ALT", "LEFT_ALT", "CTRL"]
-
-        if self.dmod is not None:
-            ret = self.checkCase(self.dmod, "dmod")
+        if (ret := self.validate_mods_n_deads("dmod", self.row, self.dmod)) != None:
             self.dmod = ret[0]
             self.color_dmo = ret[1]
-
-            ret = self.checkSpace(self.dmod, "dmod")
-            self.dmod = ret[0]
-            if ret[1] >= self.color_dmo:
-                self.color_dmo = ret[1]
-
-            if self.dmod not in modifier:
-
-                if self.dmod in modifier:
-                    log.info(
-                        f"\tRow: {self.row} - Mod >> {self.dmod} << had no underscore. Corrected"
-                    )
-                    self.color_dmod = ReturnCode.GREEN
-                else:
-                    log.warning(
-                        f"Row: {self.row} - Mod >> {self.dmod} << is unkonwn modifier"
-                    )
-                    self.color_dmo = ReturnCode.YELLOW
-
-    #    ret =  self.checkCase(self.dmod)
-    #         self.mod =       ret[0]
-    #         self.color_mod = ret[1]
-
-    def validate_all(self):
-        l = [
-            self.validate_num,
-            self.validate_cha,
-            self.validate_key,
-            self.validate_mod,
-            self.validate_dmod,
-        ]
-        for call_func in l:
-            call_func()
 
     def content(self, level: OutLevel):
 
@@ -305,10 +383,36 @@ class TestData:
                 "received": self.received,
                 "passed": self.passed,
             }
+        elif level == OutLevel.COLOR_CODES:
+            return {
+                "Num": self.color_num.name,
+                "Cha": self.color_cha.name,
+                "Key": self.color_key.name,
+                "Mod": self.color_mod.name,
+                "Dead": self.color_ded.name,
+                "Dmod": self.color_dmo.name,
+            }
+        elif level == OutLevel.VALUE_CODE_PAIR:
+            return {
+                self.num: self.color_num.name,
+                self.cha: self.color_cha.name,
+                self.key: self.color_key.name,
+                self.mod: self.color_mod.name,
+                self.dead: self.color_ded.name,
+                self.dmod: self.color_dmo.name,
+            }
 
 
-# d = TestData(1,1,1,'\r ','A','SHIFT',None,None)
-# d.validate_all()
+# l = ["ä", ".", "SCANCODE_grave", "shift", "irg endwas", "non_us_bs", "A", 1]
+# d = []
+# for i in l:
+#     d.append(TestData(1, 1, 1, i, i, i, i, i))
+
+# for i in d:
+#     i.validate_all()
+#     print(i.content(OutLevel.COLOR_CODES))
+
+
 # print(len('\x20'))
 # if '\x20' == ' ':
 #     print('jo')
