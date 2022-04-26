@@ -1,29 +1,36 @@
 import logging as log
-from test_data import TestData, ReturnCode
+from random import randint
 from excelHandler import Excel
+from test_data import ReturnCode, TestData
 
 
 class Encoder:
     def __init__(self, d: "list[TestData]", lang) -> None:
         self.d = d
         self.lang = str(lang)
-        self.filename = f'./data/braille_{self.lang[0:3].lower().replace("-","")}.h'
+        self.filename = f"./data/braille_{self.create_suffix(False)}.h"
 
     def sort_data(self) -> None:
         self.d.sort(key=lambda x: getattr(x, "num"))
 
+    def create_suffix(self, up: bool) -> str:
+        special_char_map = {ord("ä"): "a", ord("ü"): "u", ord("ö"): "o"}
+        suffix = (
+            self.lang[0:3].replace("-", "").translate(special_char_map).replace("/", "")
+        )
+        if up:
+            return suffix.upper()
+        else:
+            return suffix.lower()
+
     def header(self) -> str:
         s = "\n"
-        special_char_map = {ord("Ä"): "A", ord("Ü"): "U", ord("Ö"): "O"}
-        guardname = (
-            self.filename[-13:-2]
-            .upper()
-            .replace("-", "")
-            .translate(special_char_map)
-            .replace("/", "")
-        )
 
-        ifguard = (f"#ifndef __{guardname}_H__", f"#define __{guardname}_H__", 2 * "\n")
+        ifguard = (
+            f"#ifndef __BRAILLE_{self.create_suffix(True)}_H__",
+            f"#define __BRAILLE_{self.create_suffix(True)}_H__",
+            2 * "\n",
+        )
 
         include = (
             "#include <stdint.h>",
@@ -33,62 +40,75 @@ class Encoder:
 
         declaration = (
             "// Erich Schmids 8 Keys Braille",
-            "const static uint8_t chord_id_keycode[256][4] = {",
+            "const static uint8_t chord_id_keycode_"
+            + self.create_suffix(False)
+            + "[256][4] = {",
             "\t//            {char, char_modifier, deadkey, deadkey_modifier}",
         )
         head = ifguard + include + declaration
         return s.join(head)
 
-    def array(self, key, mod, dead, dmod) -> str:
-        if key == None:
-            key = 0
+    @staticmethod
+    def convert_key(arg, deadkey: bool):
+        if arg == None:
+            return 0
+        elif arg == "GRAVE" or arg == "SCANCODE_GRAVE":
+            return "SCANCODE_GRAVE"
 
-        elif key == "GRAVE" or key == "SCANCODE_GRAVE":
-            key = "SCANCODE_GRAVE"
+        elif deadkey and "DEADKEY_" not in arg:
+            return "DEADKEY_" + arg
+
+        elif "KEY_" not in arg:
+            return "KEY_" + arg
 
         else:
-            key = "KEY_" + key
+            return arg
 
-        if mod == None:
-            mod = 0
+    @staticmethod
+    def convert_modifier(arg):
+        if arg == None:
+            return 0
+        elif "MODIFIERKEY_" not in arg:
+            return "MODIFIERKEY_" + arg
         else:
-            mod = "MODIFIERKEY_" + mod
+            return arg
 
-        if dead == None:
-            dead = 0
-        elif dead == "GRAVE" or dead == "SCANCODE_GRAVE":
-            dead = "SCANCODE_GRAVE"
-        else:
-            dead = "DEADKEY_" + dead
-
-        if dmod == None:
-            dmod = 0
-        else:
-            dmod = "MODIFIERKEY_" + dmod
-
-        s = f"{key}, {mod}, {dead}, {dmod}"
-        return "{" + s + "},"
-
-    def num(self, num) -> str:
-        s = f"\t/* {num}  */"
-        return s
-
-    def braille_cha(self, brai, cha) -> str:
-        s = f"/* '{cha}' dots-{brai} */"
-        return s
-
-    def null_line(self, num) -> str:
-        s = f"\t/* {num}  */\t" + "{0, 0, 0, 0}," + 59 * " " + "// 0"
-        return s
-
-    def end_of_file(self) -> str:
-        s = "};" + 2 * "\n" + "#endif"
-        return s
-
-    def tab_handler(self, len) -> str:
+    @staticmethod
+    def tab_handler(len) -> str:
         max_space = 72
         space = max_space - len
         return space * " "
+
+    @staticmethod
+    def data_is_shitty(l: list) -> bool:
+        for i in l:
+            if i >= ReturnCode.YELLOW:
+                return True
+        return False
+
+    @staticmethod
+    def num(num) -> str:
+        s = f"\t/* {num}  */"
+        return s
+
+    def array(self, key, mod, dead, dmod) -> str:
+        s = f"{self.convert_key(key,False)}, {self.convert_modifier(mod)}, {self.convert_key(dead,True)}, {self.convert_modifier(dmod)}"
+        return "{" + s + "},"
+
+    @staticmethod
+    def braille_cha(brai, cha) -> str:
+        s = f"/* '{cha}' dots-{brai} */"
+        return s
+
+    @staticmethod
+    def null_line(num) -> str:
+        s = f"\t/* {num}  */\t" + "{0, 0, 0, 0}," + 59 * " " + "// 0"
+        return s
+
+    @staticmethod
+    def end_of_file() -> str:
+        s = "};" + 2 * "\n" + "#endif"
+        return s
 
     def run(self):
         self.sort_data()
@@ -106,11 +126,8 @@ class Encoder:
                     )
                     break
 
-                # if data is shitty
-                elif (
-                    data.color_key >= ReturnCode.YELLOW
-                    or data.color_mod >= ReturnCode.YELLOW
-                    or data.color_dmo >= ReturnCode.YELLOW
+                elif self.data_is_shitty(
+                    [data.color_key, data.color_mod, data.color_ded, data.color_dmo]
                 ):
                     print(self.null_line(cnt), file=file)
                     idx += 1
@@ -127,14 +144,35 @@ class Encoder:
 
                 cnt += 1
 
-            log.info(f"{cnt} Rows encoded")
             print(self.end_of_file(), file=file)
 
+            log.info(f"{cnt} Rows encoded")
 
-# numbers= [1,3,5,7,9,10,11,12,13,15,17,19,20]
+
+# l = [
+#     "ä",
+#     ".",
+#     "SCANCODE_grave",
+#     "shift",
+#     "irg endwas",
+#     "nonusbs",
+#     "A",
+#     1,
+#     "?",
+#     "klammer",
+#     ") ",
+#     "DEADKEY_CIRCUMFLEX",
+# ]
+# dat = [TestData(0, i, randint(100, 200000), n, n, n, n, n, n) for i, n in enumerate(l)]
+# for data in dat:
+#     data.validate_all()
+
+# encoder = Encoder(dat, "us-englisch")
 
 
-# dat= [TestData(0,n,randint(100,200000),'a','A',' ',' ',' ') for n in numbers]
-# encoder = Encoder(dat,'türkisch')
 # encoder.sort_data()
-# encoder.encode()
+# encoder.run()
+# print(encoder.create_suffix(True))
+# print(encoder.array("A", "SHIFT", "CIRCUMFLEX", "MODIFIERKEY_ACCUTE"))
+
+# print(encoder.data_is_shitty([ReturnCode.GREEN, ReturnCode.GREEN, ReturnCode.BLANK]))

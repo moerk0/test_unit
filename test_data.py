@@ -1,9 +1,9 @@
 import logging as log
 from abc import ABC, abstractmethod
 from ast import Return
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, IntEnum, auto
-from typing import Optional
+from typing import List, Optional
 
 log.basicConfig(level=log.INFO, format="%(levelname)s:%(message)s")
 
@@ -136,7 +136,7 @@ class OutLevel(Enum):
     VALUE_CODE_PAIR = auto()
 
 
-all_nums = []
+# all_nums = []
 
 
 @dataclass
@@ -190,7 +190,9 @@ class TestData:
     color_pas: ReturnCode = ReturnCode.RED
 
     def validate_num(self, all_nums: list) -> Optional[int]:
-        if self.num in all_nums:
+        if not isinstance(self.num, int):
+            self.color_num = NumError(self.row, "Num", self.num).return_error_code()
+        elif self.num in all_nums:
             self.color_num = EntryError(self.row, "Num", self.num).return_error_code()
         else:
             return self.num
@@ -230,7 +232,6 @@ class TestData:
             "RIGHT",
         ]
         key_mapped_names = {
-            "+": "PLUS",
             "-": "MINUS",
             ",": "COMMA",
             "<": "NON_US_BS",
@@ -403,15 +404,28 @@ class TestData:
             }
 
 
-# l = ["ä", ".", "SCANCODE_grave", "shift", "irg endwas", "non_us_bs", "A", 1]
-# d = []
+# l = [
+#     "ä",
+#     ".",
+#     "SCANCODE_grave",
+#     "shift",
+#     "irg endwas",
+#     "nonusbs",
+#     "A",
+#     1,
+#     "?",
+#     "klammer",
+#     ") ",
+#     "DEADKEY_CIRCUMFLEX",
+# ]
+# d: "list[TestData]" = []
 # for i in l:
-#     d.append(TestData(1, 1, 1, i, i, i, i, i))
+#     d.append(TestData(1, 1, 1, i, i, i, i, i, i))
 
 # for i in d:
 #     i.validate_all()
+# for i in d:
 #     print(i.content(OutLevel.COLOR_CODES))
-
 
 # print(len('\x20'))
 # if '\x20' == ' ':

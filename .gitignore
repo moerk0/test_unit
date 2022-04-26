@@ -2,8 +2,6 @@
 /data
 /excelHandler.py
 /tU.py
-/sprachtabelle*
 /.venv
-/.~lock.*
 /__pycache__
-/sprachtabelle_results.xlsx
+/snippet.py
