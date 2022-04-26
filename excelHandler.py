@@ -228,7 +228,7 @@ class Excel:
         log.info("File saved")
 
 
-ex = Excel("französisch", "./data/sprachtabelle2.xlsx")
+# ex = Excel("französisch", "./data/sprachtabelle2.xlsx")
 # d = ex.getTestData(71)
 # # # print(len(d))
 # for data in d:
@@ -238,4 +238,4 @@ ex = Excel("französisch", "./data/sprachtabelle2.xlsx")
 # # # ex.createResultFile()
 # ex.writeData(d)
 # ex.writeResults(d)
-ex.saveResultFile()
+# ex.saveResultFile()
