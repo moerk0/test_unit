@@ -1,7 +1,8 @@
 import logging as log
 from random import randint
+
 from excelHandler import Excel
-from test_data import ReturnCode, TestData
+from test_data import EntryError, OutLevel, ReturnCode, TestData
 
 
 class Encoder:
@@ -87,6 +88,14 @@ class Encoder:
         return False
 
     @staticmethod
+    def num_exisits_twice(prev_num, curr_num, cnt) -> bool:
+        if curr_num == prev_num or cnt > curr_num:
+            EntryError("Encoder:", "num", curr_num)
+            return True
+        else:
+            return False
+
+    @staticmethod
     def num(num) -> str:
         s = f"\t/* {num}  */"
         return s
@@ -120,15 +129,10 @@ class Encoder:
             prev_num = -1
             while idx < len(self.d):
                 data = self.d[idx]
-                if prev_num == data.num or cnt > data.num:
-                    log.error(
-                        f"{prev_num} exists twice !!!! Not good. You almost buffer overflowed"
-                    )
-                    break
 
-                elif self.data_is_shitty(
+                if self.data_is_shitty(
                     [data.color_key, data.color_mod, data.color_ded, data.color_dmo]
-                ):
+                ) or self.num_exisits_twice(prev_num, data.num, cnt):
                     print(self.null_line(cnt), file=file)
                     idx += 1
 
@@ -139,6 +143,7 @@ class Encoder:
                     print(self.braille_cha(data.brai, data.cha), file=file)
                     prev_num = data.num
                     idx += 1
+
                 else:
                     print(self.null_line(cnt), file=file)
 
@@ -169,9 +174,16 @@ class Encoder:
 
 # encoder = Encoder(dat, "us-englisch")
 
+# d = Excel("italienisch").getTestData()
+# for data in d:
+#     data.validate_all()
 
+# e = Encoder(d, "italienisch")
+
+# for data in d:
+#     print(data)
 # encoder.sort_data()
-# encoder.run()
+# e.run()
 # print(encoder.create_suffix(True))
 # print(encoder.array("A", "SHIFT", "CIRCUMFLEX", "MODIFIERKEY_ACCUTE"))
 

@@ -21,7 +21,7 @@ class ValidatorErrors(ABC):
     def __init__(self, row: int, var_name: str, arg, msg: str, errtype: ReturnCode):
         self.errtype = errtype
         if errtype == ReturnCode.YELLOW:
-            log.warning(f"Row: {row} - {var_name} >> {arg} << {msg}")
+            log.warning(f"Validator: Row: {row} - {var_name} >> {arg} << {msg}")
         elif errtype == ReturnCode.GREEN:
             log.info(f"Row: {row} - {var_name} >> {arg} << {msg}")
         elif errtype == ReturnCode.RED:
@@ -242,7 +242,7 @@ class TestData:
             "/": "SLASH",
             ".": "PERIOD",
             ";": "SEMICOLON",
-            r"\ ": "BACKSALSH",
+            "\\": "BACKSALSH",
         }
 
         if self.key is None:

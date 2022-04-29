@@ -11,7 +11,7 @@ class Excel:
     def __init__(
         self,
         lang: str,
-        filename="./data/sprachtabelle.xlsx",
+        filename="./data/sprachtabelle2.xlsx",
         num=0,
         brai=1,
         cha=2,

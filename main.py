@@ -4,7 +4,7 @@ from encoder import Encoder
 from excelHandler import Excel
 from GUI import Gooey
 from serialHandler import SerialCom
-from test_data import OutLevel, ReturnCode, TestData, log
+from test_data import OutLevel, TestData, log
 from test_unit import TestUnit
 
 
@@ -127,9 +127,7 @@ if __name__ == "__main__":
     gu = Gooey()
 
     try:
-        ex = Excel(
-            "us-englisch", "./data/sprachtabelle2.xlsx"
-        )  # adjust path and Language
+        ex = Excel("italienisch")  # adjust path and Language
         d = ex.getTestData()
         tu = TestUnit(d)
         enc = Encoder(d, ex.lang)
